@@ -4,13 +4,21 @@ local EnemyDB = {}
 ---@field id string
 ---@field instanceId integer?
 ---@field name string
----@field maxHp integer
+---@field max_hp integer
 ---@field hp integer?       the current hp
 ---@field damage integer
 ---@field elite boolean?    defaults to false
 ---@field hunter boolean?   defaults to false
 ---@field location string?  set on spawn
 ---@field alive boolean?    set on spawn
+---@field attack function?
+
+-- EnemyFunctons is a way to link defined functions to every enemy object
+local EnemyFunctions = {}
+
+function EnemyFunctions:attack(ctx)
+    ctx.player.hp = ctx.player.hp - self.damage
+end
 
 ---@param data Enemy
 ---@return Enemy
@@ -19,27 +27,29 @@ function EnemyDB.create(data)
         id          = data.id,
         name        = data.name,
         damage      = data.damage,
-        maxHp       = data.maxHp,
+        max_hp       = data.max_hp,
         elite       = data.elite       or false,
         hunter      = data.hunter      or false,
     }
+
+    setmetatable(enemy, { __index = EnemyFunctions })
+
     return enemy
 end
-
 
 EnemyDB.library = {
     slime = EnemyDB.create({
         id = "slime",
         name = "Slime",
         damage = 5,
-        maxHp = 10,
+        max_hp = 10,
     }),
 
     stalker = EnemyDB.create({
         id = "stalker",
         name = "Stalker",
         damage = 8,
-        maxHp = 15,
+        max_hp = 15,
         hunter = true,
         elite = true,
     }),

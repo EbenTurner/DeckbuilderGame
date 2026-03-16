@@ -14,7 +14,6 @@ function EnemyManager:initialize()
     -- Any setup that needs to be done
 end
 
-
 ---@param id string
 ---@param location Location
 function EnemyManager:spawn(id, location)
@@ -27,7 +26,7 @@ function EnemyManager:spawn(id, location)
     local instance = {
         instanceId = self._instance_counter,
         template_id = id,
-        hp = template.maxHp,
+        hp = template.max_hp,
         location = location,
         alive = true,
     }
@@ -69,6 +68,14 @@ function EnemyManager:getEnemiesInLocation(location)
         end
     end
     return found
+end
+
+-- Defines the behaviour of what enemies do during their turn
+function EnemyManager:enemyPhase(ctx)
+    -- For now just attack player if they are engaged
+    for _, enemy in ipairs(self.engaged_enemies) do
+        enemy:attack(ctx)
+    end
 end
 
 return EnemyManager

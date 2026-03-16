@@ -71,8 +71,6 @@ function DeckManager:initialize()
     self:addCard("fireball")
     self:addCard("longsword")
 
-    assert(#self.actions == 2, "Self.actions: " .. #self.actions)
-
     self:shuffle()
 end
 
@@ -107,7 +105,7 @@ function DeckManager:sync()
     self.actions = {}
     for i, base in ipairs(self._baseActions) do
         local effective = self:getEffectiveCard(base)
-        
+
         ---@cast effective Action
         self.actions[i] = effective
     end
@@ -186,6 +184,21 @@ function DeckManager:playCard(ctx, target)
     local card, idx = self:getSelectedCard()
 
     if not card then return end
+
+    -- TODO: replace this with proper checking
+    local playable, reason = ctx.player:playCard(card)
+
+    if not playable then
+        if reason == "ACTIONS" then
+            ShowMessage("Insufficient Actions")
+        elseif reason == "MANA" then
+            ShowMessage("Insufficient Mana")
+        else
+            ShowMessage("Unknown error reason, please fix")
+        end
+
+        return
+    end
 
     if card.targeted then
         card:effect(ctx, target)

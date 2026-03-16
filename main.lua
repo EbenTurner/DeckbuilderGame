@@ -12,14 +12,65 @@ local context = {
     player = Player
 }
 
--- For now, just draw 5 cards at the start of the turn
+local feedback = {
+    message = "",
+    timer = 0,
+    duration = 2.0, -- How many seconds the box stays
+    alpha = 0       -- For a nice fade-out effect
+}
+
+function ShowMessage(text)
+    feedback.message = text
+    feedback.timer = feedback.duration
+    feedback.alpha = 1
+end
+
+local function updateFeedback(dt)
+    if feedback.timer > 0 then
+        feedback.timer = feedback.timer - dt
+        -- Start fading out in the last 0.5 seconds
+        if feedback.timer < 0.5 then
+            feedback.alpha = feedback.timer / 0.5
+        end
+    end
+end
+
+local function drawFeedback()
+    if feedback.timer <= 0 then return end
+
+    local screenW = love.graphics.getWidth()
+    local width = 400
+    local height = 500
+    local x = (screenW - width) / 2
+    local y = 50 -- Top of the screen
+
+    -- Draw Box with alpha transparency
+    love.graphics.setColor(0, 0, 0, 0.8 * feedback.alpha)
+    love.graphics.rectangle("fill", x, y, width, 40, 10)
+    
+    -- Draw Border
+    love.graphics.setColor(1, 0.3, 0.3, feedback.alpha) -- Reddish tint for errors
+    love.graphics.setLineWidth(2)
+    love.graphics.rectangle("line", x, y, width, 40, 10)
+
+    -- Draw Text
+    love.graphics.setColor(1, 1, 1, feedback.alpha)
+    love.graphics.printf(feedback.message, x, y + 12, width, "center")
+    
+    -- Always reset color!
+    love.graphics.setColor(1, 1, 1, 1)
+end
+
+-- For now, just draw 5 cards. Reset actions and mana.
 local function startTurn()
     DeckManager:startTurn()
+    Player:startTurn()
 end
 
 -- For now, just move all cards from hand to discard
 local function endTurn()
     DeckManager:endTurn()
+    EnemyManager:enemyPhase(context)
 end
 
 -- Love2D's initialization function
@@ -37,13 +88,15 @@ function love.load()
     startTurn()
 end
 
-function love.update()
+function love.update(dt)
     StateManager:update()
+    updateFeedback(dt)
 end
 
 -- Love2D's drawing
 function love.draw()
     StateManager:draw()
+    drawFeedback()
 end
 
 -- Handle keyboard input

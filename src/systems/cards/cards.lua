@@ -10,6 +10,7 @@ local CardDB = {}
 ---@field description string
 ---@field targeted boolean?
 ---@field cost number?
+---@field actionCost number?
 ---@field damage number?
 ---@field effect function?  -- assets generally don't have instant effects
 ---@field transforms table<string, string>?  -- Maps old cards to replacements
@@ -24,6 +25,7 @@ function CardDB.create(data)
         slot        = data.slot,
         targeted    = data.targeted    or false,
         cost        = data.cost        or 0,
+        actionCost  = data.actionCost  or 1,
         damage      = data.damage,
         description = data.description,
         effect      = data.effect,

@@ -61,9 +61,11 @@ function StateManager:draw()
     love.graphics.print("Active card: " .. deck.selectedIdx, 20, 60)
     love.graphics.print("Current Location: " .. map.current.name, 20, 80)
     love.graphics.print("Current Location Desc: " .. map.current.description, 20, 100)
-    love.graphics.print("Player health: " .. player.hp .. "/" .. player.maxHp, 20, 120)
+    love.graphics.print("Player health: " .. player.hp .. "/" .. player.max_hp, 20, 120)
+    love.graphics.print("Actions: " .. player.actions .. "/" .. player.max_actions, 20, 140)
+    love.graphics.print("Mana: " .. player.mana .. "/" .. player.max_mana, 20, 160)
     if deck.equipment.weapon then
-        love.graphics.print("Equipped weapon: " .. deck.equipment.weapon.name, 20, 140)
+        love.graphics.print("Equipped weapon: " .. deck.equipment.weapon.name, 20, 180)
     end
 
     -- 2. Draw current environment (e.g. Combat enemies)

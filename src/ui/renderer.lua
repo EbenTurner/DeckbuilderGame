@@ -32,14 +32,14 @@ function Renderer.drawEnemy(enemy, x, y, isSelected)
     love.graphics.rectangle("fill", x + 10, y + 100, 100, 10)
 
     -- Health Bar Fill
-    local hpPercent = enemy.hp / enemy.maxHp
+    local hpPercent = enemy.hp / enemy.max_hp
     love.graphics.setColor(0.2, 0.8, 0.2)
     love.graphics.rectangle("fill", x + 10, y + 100, 100 * hpPercent, 10)
 
     -- Text
     love.graphics.setColor(1, 1, 1)
     love.graphics.printf(enemy.name, x, y + 40, 120, "center")
-    love.graphics.printf(enemy.hp .. "/" .. enemy.maxHp, x, y + 110, 120, "center")
+    love.graphics.printf(enemy.hp .. "/" .. enemy.max_hp, x, y + 110, 120, "center")
 end
 
 ---@param card Card
