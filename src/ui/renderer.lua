@@ -191,13 +191,11 @@ function Renderer.drawMap(ctx)
 
         if loc == map.current then
             love.graphics.setColor(0.2, 0.8, 0.2) -- Current Location: GREEN
+        elseif loc.revealed and containsEnemies then
+            love.graphics.setColor(1, 0.2, 0.2) -- Enemies: RED
         elseif onPath then
             if loc.revealed then
-                if containsEnemies then
-                    love.graphics.setColor(1, 0.2, 0.2) -- Enemies: RED
-                else
-                    love.graphics.setColor(0.4, 0.7, 1) -- Unrevealed: AMBER
-                end
+                love.graphics.setColor(0.4, 0.7, 1) -- Unrevealed: AMBER
             else
                 love.graphics.setColor(1, 0.6, 0) -- Revealed: Blue
             end

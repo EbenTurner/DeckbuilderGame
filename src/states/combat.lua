@@ -20,7 +20,7 @@ end
 function Combat:enter(data)
     local location_enemies = self.ctx.enemies:getEnemiesInLocation(self.map.current)
 
-    for i, enemy in ipairs(location_enemies) do
+    for _, enemy in ipairs(location_enemies) do
         self.enemies:engage(enemy.instanceId)
     end
 
@@ -28,6 +28,11 @@ function Combat:enter(data)
 end
 
 function Combat:update(dt)
+    local location_enemies = self.ctx.enemies:getEnemiesInLocation(self.map.current)
+    for _, enemy in ipairs(location_enemies) do
+        self.enemies:engage(enemy.instanceId)
+    end
+
     for i = #self.enemies.engaged_enemies, 1, -1 do
         local enemy = self.enemies.engaged_enemies[i]
 
