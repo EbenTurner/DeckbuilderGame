@@ -12,12 +12,20 @@ local EnemyDB = {}
 ---@field location string?  set on spawn
 ---@field alive boolean?    set on spawn
 ---@field attack function?
+---@field moveTowardsPlayer function?
 
 -- EnemyFunctons is a way to link defined functions to every enemy object
 local EnemyFunctions = {}
 
 function EnemyFunctions:attack(ctx)
     ctx.player.hp = ctx.player.hp - self.damage
+end
+
+function EnemyFunctions:moveTowardsPlayer(ctx)
+    local shortestPath = ctx.map:shortestPath(self.location, ctx.map.current)
+
+    -- May want to have a speed stat for multiple locations per turn
+    self.location = shortestPath[2]
 end
 
 ---@param data Enemy

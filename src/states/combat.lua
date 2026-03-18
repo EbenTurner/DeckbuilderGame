@@ -37,13 +37,17 @@ function Combat:update(dt)
     end
 
     if #self.enemies.engaged_enemies <= 0 then
-        self.state:switch("roaming")
+        self.state:switch("passive")
     end
 end
 
 function Combat:exit()
-    -- Clean up combat
-
+    -- Unengage all enemies at the location
+     for i = #self.enemies.engaged_enemies, 1, -1 do
+        local enemy = self.enemies.engaged_enemies[i]
+        table.remove(self.enemies.engaged_enemies, i)
+        table.insert(self.enemies.unengaged_enemies, enemy)
+    end
 end
 
 function Combat:draw()

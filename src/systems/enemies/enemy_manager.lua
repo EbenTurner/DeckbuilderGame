@@ -72,6 +72,11 @@ end
 
 -- Defines the behaviour of what enemies do during their turn
 function EnemyManager:enemyPhase(ctx)
+    -- Enemies move if they are unengaged
+    for _, enemy in ipairs(self.unengaged_enemies) do
+        enemy:moveTowardsPlayer(ctx)
+    end
+
     -- For now just attack player if they are engaged
     for _, enemy in ipairs(self.engaged_enemies) do
         enemy:attack(ctx)

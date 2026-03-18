@@ -1,10 +1,12 @@
 local RoamingState = require("src.states.roaming")
 local CombatState = require("src.states.combat")
+local PassiveState = require("src.states.passive")
 local UI = require("src.ui.renderer")
 
 ---@class States
 ---@field combat State | nil
 ---@field roaming State | nil
+---@field passive State | nil
 
 ---@class StateManager
 ---@field states States
@@ -15,7 +17,7 @@ local StateManager = {}
 StateManager.states = {
     roaming = nil,
     combat = nil,
-    deck = nil
+    passive = nil
 }
 
 function StateManager:initialize(ctx)
@@ -25,14 +27,15 @@ function StateManager:initialize(ctx)
     -- create state instances
     self.states.roaming = RoamingState:new(ctx)
     self.states.combat  = CombatState:new(ctx)
+    self.states.passive = PassiveState:new(ctx)
 
     -- inject global information into the instances
     for _, state in pairs(self.states) do
         state.ctx = ctx
     end
 
-    -- start game in roaming
-    self:switch("roaming")
+    -- start game in passive
+    self:switch("passive")
 end
 
 function StateManager:switch(stateName, data)

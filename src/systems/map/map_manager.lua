@@ -80,7 +80,7 @@ end
 
 function MapManager:draw()
     local GRID_SIZE = 100
-    local OFFSET = 200
+    local OFFSET = 250
     local box_size = 30
 
     for _, loc in ipairs(self.locations) do
@@ -133,6 +133,46 @@ function MapManager:moveSelected(dx, dy)
     end
 
     return false
+end
+
+---@param start Location
+---@param destination   Location       
+function MapManager:shortestPath(start, destination)
+    local distances = {}
+    local previous = {}
+    local unvisited = {}
+
+    for _, location in ipairs(self.locations) do
+        distances[location] = math.huge
+        previous[location] = nil
+        table.insert(unvisited, location)
+    end
+
+    distances[start] = 0
+
+    while #unvisited > 0 do
+        table.sort(unvisited, function(a, b) return distances[a] < distances[b] end)
+        local current = table.remove(unvisited, 1)
+
+        if current == destination then break end
+
+        for _, neighbour in ipairs(current.connections) do
+            local alt = distances[current] + 1
+            if alt < distances[neighbour] then
+                distances[neighbour] = alt
+                previous[neighbour] = current
+            end
+        end
+    end
+
+    local path = {}
+    local curr = destination
+    while curr do
+        table.insert(path, 1, curr)
+        curr = previous[curr]
+    end
+
+    return path
 end
 
 return MapManager

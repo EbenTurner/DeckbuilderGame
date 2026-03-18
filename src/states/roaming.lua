@@ -2,7 +2,6 @@ local State = require("src.states.state")
 local UI = require("src.ui.renderer")
 
 ---@class Roaming : State
----@field moving boolean
 ---@field target_location Location
 ---@field target_x integer
 ---@field target_y integer
@@ -24,22 +23,16 @@ function Roaming:enter(data)
 end
 
 function Roaming:update(dt)
-    local local_enemies = self.ctx.enemies:getEnemiesInLocation(self.ctx.map.current) -- TODO: replace this with current ocation asap
-
-    if #local_enemies > 0 then
-        self.state:switch("combat")
-    end
+    -- Update roaming
 end
 
 function Roaming:exit()
     -- Clean up roaming
+    self.ctx.map.selected_location = nil
 end
 
 function Roaming:draw()
     self.ctx.map:draw()
-
-    -- TODO: Add the map + add separate controls for roaming if wanted
-    -- Stop combat cards (i.e. attacks) being used outside of combat
 end
 
 function Roaming:keypressed(key)
@@ -53,6 +46,7 @@ function Roaming:keypressed(key)
         self.map:moveSelected(1, 0)
     elseif key == "return" or key == "space" then
         self.map:moveTo(self.map.selected_location, self.ctx)
+        self.state:switch("passive")
     end
 end
 
