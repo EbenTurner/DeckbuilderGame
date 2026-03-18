@@ -40,7 +40,6 @@ CardDB.library = {
         id = "ice_bolt",
         name = "Ice Bolt",
         type = "EVENT",
-        action = "COMBAT",
         targeted = true,
         cost = 2,
         damage = 7,
@@ -54,7 +53,6 @@ CardDB.library = {
         id = "fireball",
         name = "Fireball",
         type = "EVENT",
-        action = "COMBAT",
         cost = 2,
         damage = 3,
         description = "Deal 3 damage to all enemies.",
@@ -70,13 +68,23 @@ CardDB.library = {
         name = "Longsword",
         type = "ASSET",
         slot = "weapon",
-        action = "DECK",
         cost = 1,
         description = "Replaces 'Attack' with 'Slice' (3 dmg).",
         transforms = {
             attack = "slice"
         },
     }),
+
+    sprint = CardDB.create({
+        id = "sprint",
+        name = "Sprint",
+        type = "EVENT",
+        cost = 1,
+        description = "Move up to 3 locations away.",
+        effect = function(self, ctx)
+            ctx.state:switch("roaming", { speed = 3 })
+        end,
+    })
 }
 
 ---@param id string

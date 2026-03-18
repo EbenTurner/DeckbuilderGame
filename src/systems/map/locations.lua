@@ -55,6 +55,15 @@ LocationDB.library = {
             ctx.enemies:spawn("slime", self)
         end
     }),
+
+    exit = LocationDB.create({
+        id = "exit",
+        name = "Exit",
+        description = "A way down.",
+        enter = function(self, ctx)
+            -- TODO: move onto the next floor
+        end
+    }),
 }
 
 ---@param id string

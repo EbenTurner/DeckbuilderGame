@@ -70,6 +70,7 @@ function DeckManager:initialize()
     self:addCard("ice_bolt")
     self:addCard("fireball")
     self:addCard("longsword")
+    self:addCard("sprint")
 
     self:shuffle()
 end

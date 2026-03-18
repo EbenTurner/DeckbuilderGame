@@ -3,14 +3,21 @@ local Renderer = {}
 local screenW = love.graphics.getWidth()
 local screenH = love.graphics.getHeight()
 
+local infoWidth = screenW * 0.2
+local mainWidth = screenW - infoWidth
+local handHeight = screenH * 0.35
+local mainHeight = screenH - handHeight
+
 local layout = {
-    handX = screenW * 0.5,
-    handY = screenH * 0.7,
-    gutter = screenW * 0.05,
-    handWidth = screenW * 0.9,
+    -- Screen zones
+    infoZone = { x = 0, y = 0, w = infoWidth, h = mainHeight },
+    mainZone = { x = infoWidth, y = 0, w = mainWidth, h = mainHeight },
+    handZone = { x = 0, y = mainHeight, w = screenW, h = handHeight },
+
+    -- Card specifics
     cardW = 100,
     cardH = 140,
-    liftH = 15, -- How high selected card is lifted
+    liftH = 15,
 }
 
 -- Draws a single enemy
@@ -72,22 +79,24 @@ end
 
 -- Helper function for positioning the cards (overlaps them if needed)
 local function calculateCardPosition(index, numCards)
-    local cardW = layout.cardW
+    local zone = layout.handZone
     local spacing = 5
 
-    local naturalWidth = (numCards * cardW) + ((numCards - 1) * spacing)
-    local finalHandWidth = math.min(naturalWidth, layout.handWidth)
-    local leftBound = layout.handX - (finalHandWidth / 2)
+    local naturalWidth = (numCards * layout.cardW) + ((numCards - 1) * spacing)
+    local finalHandWidth = math.min(naturalWidth, zone.w * 0.95)
+    local leftBound = zone.x + (zone.w / 2) - (finalHandWidth / 2)
+
+    local centerY = zone.y + (zone.h / 2) - (layout.cardH / 2)
 
     local x
     if numCards > 1 then
-        local travelDistance = finalHandWidth - cardW
+        local travelDistance = finalHandWidth - layout.cardW
         x = leftBound + (index - 1) * (travelDistance / (numCards - 1))
     else
-        x = layout.handX - (cardW / 2)
+        x = zone.x + (zone.w / 2) - (layout.cardW / 2)
     end
 
-    return x, layout.handY
+    return x, centerY
 end
 
 function Renderer.drawHand(deck)
@@ -122,11 +131,105 @@ function Renderer.drawHand(deck)
     end
 end
 
-local printLocation = 0
+function Renderer.drawMap(map)
+    local zone = layout.mainZone
+    local GRID_SIZE = 100
+    local box_size = 30
+
+    -- Determine map bounds
+    local minX, maxX, minY, maxY = math.huge, -math.huge, math.huge, -math.huge
+    for _, loc in ipairs(map.locations) do
+        minX = math.min(minX, loc.x)
+        maxX = math.max(maxX, loc.x)
+        minY = math.min(minY, loc.y)
+        maxY = math.max(maxY, loc.y)
+    end
+
+    -- Determine map center
+    local mapMidX = (minX + maxX) / 2
+    local mapMidY = (minY + maxY) / 2
+
+    local offsetX = (zone.x + zone.w / 2) - (mapMidX * GRID_SIZE)
+    local offsetY = (zone.y + zone.h / 2) - (mapMidY * GRID_SIZE)
+
+    -- Helper function to convert grid units to screen units
+    local function toScreen(gx, gy)
+        return gx * GRID_SIZE + offsetX, gy * GRID_SIZE + offsetY
+    end
+
+    love.graphics.setColor(0.5, 0.5, 0.5)
+    for _, loc in ipairs(map.locations) do
+        local sx, sy = toScreen(loc.x, loc.y)
+        for _, conn in ipairs(loc.connections) do
+            local tx, ty = toScreen(conn.x, conn.y)
+            love.graphics.line(sx, sy, tx, ty)
+        end
+    end
+
+    for _, loc in ipairs(map.locations) do
+        local sx, sy = toScreen(loc.x, loc.y)
+
+        if loc == map.current then
+            love.graphics.setColor(1, 1, 0) -- Highlight current location
+        elseif loc == map.selected_location then
+            love.graphics.setColor(0.4, 0.7, 1)
+        else
+            love.graphics.setColor(1, 1, 1)
+        end
+
+        love.graphics.circle("fill", sx, sy, 10)
+
+        -- Text with drop shadow
+        love.graphics.setColor(0, 0, 0)
+        love.graphics.print(loc.name, sx + 13, sy - 5)
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.print(loc.name, sx + 12, sy - 6)
+
+        if loc == map.selected_location then
+            love.graphics.setLineWidth(2)
+            love.graphics.rectangle("line", sx - (box_size/2), sy - (box_size/2), box_size, box_size, 4)
+        end
+    end
+end
+
+-- TODO: remove / change this, used for identifying sections
+function Renderer.drawLayout()
+    love.graphics.setLineWidth(1)
+    -- Info Section
+    love.graphics.setColor(0.1, 0.1, 0.1)
+    love.graphics.rectangle("line", layout.infoZone.x, layout.infoZone.y, layout.infoZone.w, layout.infoZone.h)
+
+    -- Main Section
+    love.graphics.setColor(0.2, 0.1, 0.1)
+    love.graphics.rectangle("line", layout.mainZone.x, layout.mainZone.y, layout.mainZone.w, layout.mainZone.h)
+
+    -- Hand Section
+    love.graphics.setColor(0.1, 0.1, 0.2)
+    love.graphics.rectangle("line", layout.handZone.x, layout.handZone.y, layout.handZone.w, layout.handZone.h)
+end
+
+-- Draw Info Text (Corrected to stay in the 10% column)
+local printLocation = 10
+
+function Renderer.resetPrint()
+    printLocation = 10
+end
+
 function Renderer.print(text)
     love.graphics.setColor(1, 1, 1)
-    love.graphics.print(text, 20, printLocation)
-    printLocation = printLocation + 20
+    
+    local font = love.graphics.getFont()
+    local widthLimit = layout.infoZone.w - 10
+    
+    -- 1. Draw the text
+    love.graphics.printf(text, layout.infoZone.x + 5, printLocation, widthLimit, "left")
+    
+    -- 2. Calculate how many lines were actually rendered
+    local _, wrappedLines = font:getWrap(text, widthLimit)
+    local lineCount = #wrappedLines
+    
+    -- 3. Move the pointer down based on line count + a small gap (2px)
+    printLocation = printLocation + (lineCount * font:getHeight()) + 5
 end
 
 return Renderer

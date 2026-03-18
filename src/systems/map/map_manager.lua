@@ -1,10 +1,12 @@
 local LocationDB = require("src.systems.map.locations")
+local UI = require("src.ui.renderer")
 
 ---@class MapManager
 ---@field locations Location[]
 ---@field current Location
 ---@field _instance_counter integer
 ---@field selected_location Location
+---@field speed integer
 local MapManager = {}
 
 MapManager.locations = {}
@@ -14,12 +16,14 @@ function MapManager:initialize()
     -- Add one room and start there
     local startRoom = self:addLocation("room", 0, 0)
     local tavern = self:addLocation("tavern", 1, 0)
-    local boss = self:addLocation("boss", 1, 1)
     local horRoom = self:addLocation("room", 2, 0)
+    local boss = self:addLocation("boss", 1, 1)
+    local exit = self:addLocation("exit", 2, 1)
 
     self:addConnection(startRoom, tavern)
     self:addConnection(tavern, boss)
     self:addConnection(horRoom, tavern)
+    self:addConnection(boss, exit)
 
     self:setCurrentLocation(startRoom)
 end
@@ -55,77 +59,77 @@ function MapManager:setCurrentLocation(location)
     self.current = location
 end
 
-function MapManager:moveTo(target, ctx)
-    local isConnected = false
-    for _, conn in ipairs(self.current.connections) do
-        if conn == target then
-            isConnected = true
+
+---@param destination Location
+function MapManager:moveTo(destination, ctx)
+    local path = self:shortestPath(self.current, destination)
+
+    for i = 2, #path do
+        local nextStep = path[i]
+
+        self:setCurrentLocation(nextStep)
+        if not nextStep.discovered then
+            nextStep:reveal(ctx)
+            nextStep.discovered = true
+        end
+
+        nextStep:enter(ctx)
+
+        -- TODO: expand this for different kinds of obstacles + potential to run past with opportunity attack?
+        local enemies = ctx.enemies:getEnemiesInLocation(self.current)
+        if enemies and #enemies > 0 then
+            ctx.state:switch("passive")
             break
         end
     end
-
-    if isConnected then
-        self:setCurrentLocation(target)
-
-        if not target.discovered then
-            target:reveal(ctx)
-            target.discovered = true
-        end
-
-        target:enter(ctx)
-    end
-    return false
 end
 
 
 function MapManager:draw()
-    local GRID_SIZE = 100
-    local OFFSET = 250
-    local box_size = 30
-
-    for _, loc in ipairs(self.locations) do
-        local screenX = loc.x * GRID_SIZE + OFFSET
-        local screenY = loc.y * GRID_SIZE + OFFSET
-
-        love.graphics.setColor(0.5, 0.5, 0.5)
-        for _, conn in ipairs(loc.connections) do
-            love.graphics.line(screenX, screenY, conn.x * GRID_SIZE + OFFSET, conn.y * GRID_SIZE + OFFSET)
-        end
-    end
-
-    for _, loc in ipairs(self.locations) do
-        local screenX = loc.x * GRID_SIZE + OFFSET
-        local screenY = loc.y * GRID_SIZE + OFFSET
-
-        if loc == self.current then
-            love.graphics.setColor(1, 1, 0) -- Highlight current location
-        else
-            love.graphics.setColor(1, 1, 1)
-        end
-
-        love.graphics.circle("fill", screenX, screenY, 10)
-        love.graphics.print(loc.name, screenX + 12, screenY - 6)
-
-        if loc == self.selected_location then
-            love.graphics.setColor(1, 1, 0)
-            love.graphics.setLineWidth(2)
-            love.graphics.rectangle(
-                "line",
-                screenX - (box_size / 2),
-                screenY - (box_size / 2),
-                box_size,
-                box_size,
-                4
-            )
-        end
-    end
+    UI.drawMap(self)
 end
 
+---@param distance integer
+---@return Location[]
+function MapManager:getLocationsWithin(distance)
+    local visited = {}
+    local currentLevel = {}
+
+    currentLevel[self.current] = true
+    visited[self.current] = true
+
+    for i = 1, distance do
+        local nextLevel = {}
+        for location, _ in pairs(currentLevel) do
+            for _, neighbour in ipairs(location.connections) do
+                if not visited[neighbour] then
+                    visited[neighbour] = true
+                    nextLevel[neighbour] = true
+                end
+            end
+        end
+
+        currentLevel = nextLevel
+        if next(currentLevel) == nil then break end
+    end
+
+    local result = {}
+    for loc, _ in pairs(visited) do
+        table.insert(result, loc)
+    end
+
+    return result
+end
+
+---@param dx integer
+---@param dy integer
 function MapManager:moveSelected(dx, dy)
     local tx, ty  = self.selected_location.x + dx, self.selected_location.y + dy
 
-    -- only want to be able to move hover to adjacent locations
-    for _, loc in ipairs(self.selected_location.connections) do
+    local possibleLocations = self:getLocationsWithin(self.speed)
+
+    -- only want to be able to move hover locations within speed
+    for _, loc in ipairs(possibleLocations) do
         if loc.x == tx and loc.y == ty then
             self.selected_location = loc
             return true

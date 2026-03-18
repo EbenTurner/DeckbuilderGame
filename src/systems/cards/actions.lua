@@ -43,7 +43,7 @@ ActionDB.library = {
         action = "GENERAL",
         description = "Move to a connected location.",
         effect = function(self, ctx)
-            ctx.state:switch("roaming")
+            ctx.state:switch("roaming", { speed = 1 })
         end,
     }),
 

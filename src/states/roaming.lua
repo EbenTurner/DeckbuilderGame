@@ -5,6 +5,7 @@ local UI = require("src.ui.renderer")
 ---@field target_location Location
 ---@field target_x integer
 ---@field target_y integer
+---@field speed integer     How many locations can be moved
 local Roaming = setmetatable({}, { __index = State })
 Roaming.__index = Roaming
 
@@ -19,6 +20,7 @@ end
 
 function Roaming:enter(data)
     self.ctx.map.selected_location = self.ctx.map.current
+    self.ctx.map.speed = data.speed
     -- set up UI
 end
 

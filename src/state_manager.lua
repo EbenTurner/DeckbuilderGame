@@ -58,17 +58,15 @@ function StateManager:draw()
     local player = self.ctx.player
 
     -- 1. UI information
-    love.graphics.setColor(1, 1, 1)
-    love.graphics.print("Deck: " .. #deck.deck .. ". Discard: " .. #deck.discard, 20, 20)
-    love.graphics.print("Use Left/Right Arrows to cycle. Press 'D' to draw. Press 'Enter' to play selected card. Press 'H' to end turn.", 20, 40)
-    love.graphics.print("Active card: " .. deck.selectedIdx, 20, 60)
-    love.graphics.print("Current Location: " .. map.current.name, 20, 80)
-    love.graphics.print("Current Location Desc: " .. map.current.description, 20, 100)
-    love.graphics.print("Player health: " .. player.hp .. "/" .. player.max_hp, 20, 120)
-    love.graphics.print("Actions: " .. player.actions .. "/" .. player.max_actions, 20, 140)
-    love.graphics.print("Mana: " .. player.mana .. "/" .. player.max_mana, 20, 160)
+    UI.resetPrint()
+    UI.print("Deck: " .. #deck.deck .. ". Discard: " .. #deck.discard)
+    UI.print("Current Location: " .. map.current.name)
+    UI.print(map.current.description)
+    UI.print("Player health: " .. player.hp .. "/" .. player.max_hp)
+    UI.print("Actions: " .. player.actions .. "/" .. player.max_actions)
+    UI.print("Mana: " .. player.mana .. "/" .. player.max_mana)
     if deck.equipment.weapon then
-        love.graphics.print("Equipped weapon: " .. deck.equipment.weapon.name, 20, 180)
+        UI.print("Equipped weapon: " .. deck.equipment.weapon.name)
     end
 
     -- 2. Draw current environment (e.g. Combat enemies)
