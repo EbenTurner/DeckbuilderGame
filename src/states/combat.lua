@@ -50,7 +50,7 @@ function Combat:exit()
     end
 end
 
-function Combat:draw()
+function Combat:draw(ctx)
     -- 1. Draw Enemies from the local list we populated in :enter()
     for i, enemy in ipairs(self.enemies.engaged_enemies) do
         local isSelected = (self.is_targeting and self.target_idx == i)

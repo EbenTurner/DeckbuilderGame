@@ -25,7 +25,7 @@ end
 function State:enter(data) end
 function State:exit() end
 function State:update(dt) end
-function State:draw() end
+function State:draw(ctx) end
 function State:keypressed(key) end
 
 return State

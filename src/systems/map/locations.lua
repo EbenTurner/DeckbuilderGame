@@ -40,7 +40,7 @@ LocationDB.library = {
         id = "tavern",
         name = "Tavern",
         description = "Nestled in the dungeon is Old Joe's tavern. Stop and have a drink.",
-        reveal = function(_, ctx)
+        reveal = function(self, ctx)
             -- heal the player for 30% of max_hp
             local healAmount = math.floor(ctx.player.max_hp * 0.3)
             ctx.player.hp = math.min(ctx.player.max_hp, ctx.player.hp + healAmount)

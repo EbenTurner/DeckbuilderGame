@@ -43,6 +43,7 @@ ActionDB.library = {
         action = "GENERAL",
         description = "Move to a connected location.",
         effect = function(self, ctx)
+            -- TODO: Add ability to cancel the card, not spending actions, etc.
             ctx.state:switch("roaming", { speed = 1 })
         end,
     }),

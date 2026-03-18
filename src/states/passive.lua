@@ -30,8 +30,8 @@ function Passive:exit()
     -- Clean up passive
 end
 
-function Passive:draw()
-    self.ctx.map:draw()
+function Passive:draw(ctx)
+    self.ctx.map:draw(ctx)
 end
 
 -- Stop combat cards (i.e. attacks) being used outside of combat

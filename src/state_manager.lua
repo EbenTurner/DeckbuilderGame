@@ -70,7 +70,7 @@ function StateManager:draw()
     end
 
     -- 2. Draw current environment (e.g. Combat enemies)
-    self.current:draw()
+    self.current:draw(self.ctx)
 
     -- 3. Draw Hand from the injected context
     UI.drawHand(deck)

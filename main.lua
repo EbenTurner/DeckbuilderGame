@@ -81,7 +81,7 @@ function love.load()
 
     DeckManager:initialize()
     EnemyManager:initialize()
-    MapManager:initialize()
+    MapManager:initialize(context)
 
     StateManager:initialize(context)
 

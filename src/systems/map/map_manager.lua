@@ -12,7 +12,7 @@ local MapManager = {}
 MapManager.locations = {}
 MapManager._instance_counter = 0
 
-function MapManager:initialize()
+function MapManager:initialize(ctx)
     -- Add one room and start there
     local startRoom = self:addLocation("room", 0, 0)
     local tavern = self:addLocation("tavern", 1, 0)
@@ -25,7 +25,7 @@ function MapManager:initialize()
     self:addConnection(horRoom, tavern)
     self:addConnection(boss, exit)
 
-    self:setCurrentLocation(startRoom)
+    self:enterLocation(startRoom, ctx)
 end
 
 ---@param id string
@@ -59,6 +59,16 @@ function MapManager:setCurrentLocation(location)
     self.current = location
 end
 
+---@param location Location
+function MapManager:enterLocation(location, ctx)
+    self:setCurrentLocation(location)
+    if not location.revealed then
+        location:reveal(ctx)
+        location.revealed = true
+    end
+
+    location:enter(ctx)
+end
 
 ---@param destination Location
 function MapManager:moveTo(destination, ctx)
@@ -67,14 +77,7 @@ function MapManager:moveTo(destination, ctx)
     for i = 2, #path do
         local nextStep = path[i]
 
-        self:setCurrentLocation(nextStep)
-        if not nextStep.discovered then
-            nextStep:reveal(ctx)
-            nextStep.discovered = true
-        end
-
-        nextStep:enter(ctx)
-
+        self:enterLocation(nextStep, ctx)
         -- TODO: expand this for different kinds of obstacles + potential to run past with opportunity attack?
         local enemies = ctx.enemies:getEnemiesInLocation(self.current)
         if enemies and #enemies > 0 then
@@ -85,8 +88,8 @@ function MapManager:moveTo(destination, ctx)
 end
 
 
-function MapManager:draw()
-    UI.drawMap(self)
+function MapManager:draw(ctx)
+    UI.drawMap(ctx)
 end
 
 ---@param distance integer

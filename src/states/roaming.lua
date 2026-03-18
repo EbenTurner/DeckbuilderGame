@@ -33,8 +33,9 @@ function Roaming:exit()
     self.ctx.map.selected_location = nil
 end
 
-function Roaming:draw()
-    self.ctx.map:draw()
+---@param ctx table
+function Roaming:draw(ctx)
+    self.ctx.map:draw(ctx)
 end
 
 function Roaming:keypressed(key)
@@ -48,6 +49,8 @@ function Roaming:keypressed(key)
         self.map:moveSelected(1, 0)
     elseif key == "return" or key == "space" then
         self.map:moveTo(self.map.selected_location, self.ctx)
+        self.state:switch("passive")
+    elseif key == "escape" then
         self.state:switch("passive")
     end
 end

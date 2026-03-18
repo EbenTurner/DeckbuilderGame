@@ -131,7 +131,12 @@ function Renderer.drawHand(deck)
     end
 end
 
-function Renderer.drawMap(map)
+function Renderer.drawMap(ctx)
+    ---@type MapManager
+    local map = ctx.map
+    ---@type EnemyManager
+    local enemies = ctx.enemies
+
     local zone = layout.mainZone
     local GRID_SIZE = 100
     local box_size = 30
@@ -166,15 +171,38 @@ function Renderer.drawMap(map)
         end
     end
 
+    local path = {}
+    if map.selected_location ~= map.current then
+        path = map:shortestPath(map.current, map.selected_location)
+    end
+
     for _, loc in ipairs(map.locations) do
         local sx, sy = toScreen(loc.x, loc.y)
 
+        local onPath = false -- find locations on the selected path
+        for _, path_loc in ipairs(path) do
+            if loc == path_loc then
+                onPath = true
+            end
+        end
+
+        local locationEnemies = enemies:getEnemiesInLocation(loc)
+        local containsEnemies = (#locationEnemies > 0)
+
         if loc == map.current then
-            love.graphics.setColor(1, 1, 0) -- Highlight current location
-        elseif loc == map.selected_location then
-            love.graphics.setColor(0.4, 0.7, 1)
+            love.graphics.setColor(0.2, 0.8, 0.2) -- Current Location: GREEN
+        elseif onPath then
+            if loc.revealed then
+                if containsEnemies then
+                    love.graphics.setColor(1, 0.2, 0.2) -- Enemies: RED
+                else
+                    love.graphics.setColor(0.4, 0.7, 1) -- Unrevealed: AMBER
+                end
+            else
+                love.graphics.setColor(1, 0.6, 0) -- Revealed: Blue
+            end
         else
-            love.graphics.setColor(1, 1, 1)
+            love.graphics.setColor(1, 1, 1) -- Unselected: White
         end
 
         love.graphics.circle("fill", sx, sy, 10)
