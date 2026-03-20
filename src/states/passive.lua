@@ -8,7 +8,7 @@ Passive.__index = Passive
 
 ---@return Passive
 function Passive:new(ctx)
-    local instance = State.new(self, ctx)
+    local instance = State.new(self, ctx, "passive")
     ---@cast instance Passive
 
     return instance
@@ -40,7 +40,9 @@ function Passive:keypressed(key)
         self.deck:cycle(key)
     elseif key == "return" then
         local card = self.deck:getSelectedCard()
-        self.deck:playCard(self.ctx)
+        if not card.combat_only then
+            self.deck:playCard(self.ctx)
+        end
     end
 end
 

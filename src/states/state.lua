@@ -1,5 +1,5 @@
 ---@class State
----@field location Location
+---@field name string
 ---@field ctx table
 ---@field state StateManager
 ---@field deck DeckManager
@@ -9,9 +9,12 @@
 local State = {}
 State.__index = State
 
-function State:new(ctx)
+
+-- TODO: replace the name field, feels messy
+function State:new(ctx, name)
     local instance = setmetatable({}, self)
 
+    instance.name = name
     instance.ctx = ctx
     instance.state = ctx.state
     instance.deck = ctx.deck

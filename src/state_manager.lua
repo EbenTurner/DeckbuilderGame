@@ -73,7 +73,7 @@ function StateManager:draw()
     self.current:draw(self.ctx)
 
     -- 3. Draw Hand from the injected context
-    UI.drawHand(deck)
+    UI.drawHand(deck, self.ctx)
 end
 
 function StateManager:keypressed(key)

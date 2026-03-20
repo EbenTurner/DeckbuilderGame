@@ -12,7 +12,7 @@ Roaming.__index = Roaming
 
 ---@return Roaming
 function Roaming:new(ctx)
-    local instance = State.new(self, ctx)
+    local instance = State.new(self, ctx, "roaming")
     ---@cast instance Roaming
 
     return instance

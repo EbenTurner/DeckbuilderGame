@@ -53,11 +53,15 @@ end
 ---@param x integer
 ---@param y integer
 ---@param isSelected boolean
-local function drawCard(card, x, y, isSelected)
+---@param state string
+local function drawCard(card, x, y, isSelected, state)
     if isSelected then y = y - layout.liftH end -- lift selected card
 
     -- 1. DRAW THE CARD BODY (The Background)
     love.graphics.setColor(1, 1, 1)
+    if state ~= "combat" and card.combat_only then
+        love.graphics.setColor(0.5, 0.5, 0.5)
+    end
     love.graphics.rectangle("fill", x, y, layout.cardW, layout.cardH)
 
     -- 2. DRAW THE CARD BORDER
@@ -99,14 +103,20 @@ local function calculateCardPosition(index, numCards)
     return x, centerY
 end
 
-function Renderer.drawHand(deck)
+---@param deck DeckManager
+---@param ctx table
+function Renderer.drawHand(deck, ctx)
     local numCards = #deck.actions + #deck.hand
+
+    ---@type StateManager   
+    local stateManager = ctx.state
+    local state = stateManager.current.name
 
     -- Draw cards in hand (overlap cards when there are many)
     for i, card in ipairs(deck.actions) do
         if i ~= deck.selectedIdx then
             local x, y = calculateCardPosition(i, numCards)
-            drawCard(card, x, y, false)
+            drawCard(card, x, y, false, state)
         end
     end
 
@@ -115,19 +125,19 @@ function Renderer.drawHand(deck)
     for i, card in ipairs(deck.hand) do
         if i ~= handSelectedIdx then
             local x, y = calculateCardPosition(#deck.actions + i, numCards)
-            drawCard(card, x, y, false)
+            drawCard(card, x, y, false, state)
         end
     end
 
     if deck.actions[deck.selectedIdx] then
         local x, y = calculateCardPosition(deck.selectedIdx, numCards)
-        drawCard(deck.actions[deck.selectedIdx], x, y, true)
+        drawCard(deck.actions[deck.selectedIdx], x, y, true, state)
     end
 
     local hand_idx = deck.selectedIdx - #deck.actions
     if deck.hand[hand_idx] then
         local x, y = calculateCardPosition(#deck.actions + hand_idx, numCards)
-        drawCard(deck.hand[hand_idx], x, y, true)
+        drawCard(deck.hand[hand_idx], x, y, true, state)
     end
 end
 
@@ -243,17 +253,17 @@ end
 
 function Renderer.print(text)
     love.graphics.setColor(1, 1, 1)
-    
+
     local font = love.graphics.getFont()
     local widthLimit = layout.infoZone.w - 10
-    
+
     -- 1. Draw the text
     love.graphics.printf(text, layout.infoZone.x + 5, printLocation, widthLimit, "left")
-    
+
     -- 2. Calculate how many lines were actually rendered
     local _, wrappedLines = font:getWrap(text, widthLimit)
     local lineCount = #wrappedLines
-    
+
     -- 3. Move the pointer down based on line count + a small gap (2px)
     printLocation = printLocation + (lineCount * font:getHeight()) + 5
 end

@@ -28,7 +28,7 @@ ActionDB.library = {
     attack = ActionDB.create({
         id = "attack",
         name = "Attack",
-        action = "COMBAT",
+        combat_only = true,
         targeted = true,
         damage = 1,
         description = "Deal 1 damage to an enemy.",
@@ -40,7 +40,6 @@ ActionDB.library = {
     move = ActionDB.create({
         id = "move",
         name = "Move",
-        action = "GENERAL",
         description = "Move to a connected location.",
         effect = function(self, ctx)
             -- TODO: Add ability to cancel the card, not spending actions, etc.
@@ -48,10 +47,11 @@ ActionDB.library = {
         end,
     }),
 
+    -- Made from asset "Longsword"
     slice = ActionDB.create({
         id = "slice",
         name = "Slice",
-        action = "COMBAT",
+        combat_only = true,
         targeted = true,
         damage = 3,
         description = "Deal 3 damage to an enemy.",

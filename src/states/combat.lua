@@ -9,7 +9,7 @@ Combat.__index = Combat
 
 ---@return Combat
 function Combat:new(ctx)
-    local instance = State.new(self, ctx)
+    local instance = State.new(self, ctx, "combat")
     ---@cast instance Combat
 
     instance.is_targeting = false

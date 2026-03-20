@@ -165,7 +165,7 @@ function DeckManager:cycle(direction)
         if self.selectedIdx > hand_size then self.selectedIdx = 1 end
     elseif direction == "left" then
         self.selectedIdx = self.selectedIdx - 1
-        if self.selectedIdx < 1 then self.selectedIdx = #self.hand end
+        if self.selectedIdx < 1 then self.selectedIdx = hand_size end
     end
 end
 

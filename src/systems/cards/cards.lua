@@ -3,17 +3,18 @@ local CardDB = {}
 
 ---@class Card
 ---@field id string
----@field instanceId integer? -- Unique id for a specific card instance
+---@field instanceId integer?               Unique id for a specific card instance
 ---@field name string
 ---@field type "EVENT"|"ASSET"
----@field slot "weapon"?   -- add more as I add more assets
+---@field combat_only boolean?               Clarify whether events are combat only or not
+---@field slot "weapon"?                    TODO: add more as I add more assets
 ---@field description string
 ---@field targeted boolean?
 ---@field cost number?
 ---@field actionCost number?
 ---@field damage number?
----@field effect function?  -- assets generally don't have instant effects
----@field transforms table<string, string>?  -- Maps old cards to replacements
+---@field effect function?                  The instant effect of the card
+---@field transforms table<string, string>? Maps old cards to replacements e.g. with weapons
 
 ---@param data Card
 ---@return Card
@@ -22,6 +23,7 @@ function CardDB.create(data)
         id          = data.id,
         name        = data.name,
         type        = data.type,
+        combat_only = data.combat_only or false,
         slot        = data.slot,
         targeted    = data.targeted    or false,
         cost        = data.cost        or 0,
@@ -40,6 +42,7 @@ CardDB.library = {
         id = "ice_bolt",
         name = "Ice Bolt",
         type = "EVENT",
+        combat_only = true,
         targeted = true,
         cost = 2,
         damage = 7,
@@ -53,6 +56,7 @@ CardDB.library = {
         id = "fireball",
         name = "Fireball",
         type = "EVENT",
+        combat_only = true,
         cost = 2,
         damage = 3,
         description = "Deal 3 damage to all enemies.",
