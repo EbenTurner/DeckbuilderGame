@@ -5,6 +5,7 @@
 ---@field max_actions integer
 ---@field mana integer
 ---@field max_mana integer
+---@field block integer
 local Player = {
     max_hp = 30,
     hp = 15,
@@ -17,6 +18,7 @@ local Player = {
 function Player:startTurn()
     self.actions = self.max_actions
     self.mana = self.max_mana
+    self.block = 0
 end
 
 ---@param card Card

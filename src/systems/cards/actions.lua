@@ -4,7 +4,6 @@ local ActionDB = {}
 setmetatable(ActionDB, { __index = CardDB })
 
 ---@class Action : Card
----@field type "ACTION"?
 ---@field cost number?
 local Action = {}
 Action.__index = Action
@@ -13,7 +12,7 @@ setmetatable(Action, { __index = CardDB.Card })
 ---@param data Action
 ---@return Action
 function ActionDB.create(data)
-    data.type = "ACTION"
+    data.is_action = true
     data.cost = data.cost or 0
 
     local instance = CardDB.create(data)

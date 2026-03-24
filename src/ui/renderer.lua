@@ -36,49 +36,76 @@ function Renderer.drawEnemy(enemy, x, y, isSelected)
 
     -- Health Bar Background
     love.graphics.setColor(0.5, 0.1, 0.1)
-    love.graphics.rectangle("fill", x + 10, y + 100, 100, 10)
+    love.graphics.rectangle("fill", x + 10, y + 90, 100, 10)
 
     -- Health Bar Fill
     local hpPercent = enemy.hp / enemy.max_hp
     love.graphics.setColor(0.2, 0.8, 0.2)
-    love.graphics.rectangle("fill", x + 10, y + 100, 100 * hpPercent, 10)
+    love.graphics.rectangle("fill", x + 10, y + 90, 100 * hpPercent, 10)
 
     -- Text
     love.graphics.setColor(1, 1, 1)
-    love.graphics.printf(enemy.name, x, y + 40, 120, "center")
-    love.graphics.printf(enemy.hp .. "/" .. enemy.max_hp, x, y + 110, 120, "center")
+    love.graphics.printf(enemy.name, x, y + 20, 120, "center")
+    love.graphics.printf(enemy.damage .. " dmg", x, y + 60, 120, "center")
+    love.graphics.printf(enemy.hp .. "/" .. enemy.max_hp, x, y + 100, 120, "center")
 end
+
+local Palette = {
+    event     = { 0.94, 0.90, 0.90 }, 
+    action    = { 0.82, 0.75, 0.60 }, 
+    text      = { 0.15, 0.12, 0.10 }, -- Not pure black, but a "Dried Ink" dark brown
+    text_error = { 0.60, 0.20, 0.20 }, -- Faded Blood/Red Ink
+    disabled  = { 0.40, 0.38, 0.35 }, -- Muted "Mud" color
+    highlight = { 0.85, 0.45, 0.20 }, -- A burnt orange/copper for selection
+    transform = { 0.20, 0.50, 0.20 }, -- A deep forest green for gear-modified cards
+}
 
 ---@param card Card
 ---@param x integer
 ---@param y integer
 ---@param isSelected boolean
----@param state string
-local function drawCard(card, x, y, isSelected, state)
+---@param ctx table
+local function drawCard(card, x, y, isSelected, ctx)
+    local state = ctx.state.current.name ---@type string
+    local currentMana = ctx.player.mana ---@type integer
+
     if isSelected then y = y - layout.liftH end -- lift selected card
 
     -- 1. DRAW THE CARD BODY (The Background)
-    love.graphics.setColor(1, 1, 1)
-    if state ~= "combat" and card.combat_only then
-        love.graphics.setColor(0.5, 0.5, 0.5)
+    local bgColor = Palette.event
+    local borderColor = {0, 0, 0}
+    local isCombatLocked = (state ~= "combat" and card.combat_only)
+
+    if isCombatLocked then
+        bgColor = Palette.disabled
+    elseif card.is_action then
+        bgColor = Palette.action
     end
+
+    love.graphics.setColor(bgColor)
     love.graphics.rectangle("fill", x, y, layout.cardW, layout.cardH)
 
     -- 2. DRAW THE CARD BORDER
 
     -- highlight for selected card
     if isSelected then
-        love.graphics.setColor(1, 1, 0)
-        love.graphics.rectangle("line", x - 5, y - 5, layout.cardW + 10, layout.cardH + 10)
+        love.graphics.setColor(Palette.highlight)
+        love.graphics.setLineWidth(4)
+        love.graphics.rectangle("line", x - 4, y - 4, layout.cardW + 8, layout.cardH + 8)
     end
 
-    love.graphics.setColor(0, 0, 0)
+    love.graphics.setColor(borderColor)
     love.graphics.setLineWidth(2)
     love.graphics.rectangle("line", x, y, layout.cardW, layout.cardH)
 
     -- 3. DRAW THE TEXT (The Foreground)
+    love.graphics.setColor(Palette.text)
     love.graphics.print(card.name, x + 10, y + 10)
-    love.graphics.print("Cost: " .. card.cost, x + 10, y + 120)
+
+    if card.cost > currentMana then
+        love.graphics.setColor(Palette.text_error)
+    end
+    love.graphics.print("Cost: " .. card.cost, x + 10, y + layout.cardH - 30)
 end
 
 -- Helper function for positioning the cards (overlaps them if needed)
@@ -108,15 +135,11 @@ end
 function Renderer.drawHand(deck, ctx)
     local numCards = #deck.actions + #deck.hand
 
-    ---@type StateManager   
-    local stateManager = ctx.state
-    local state = stateManager.current.name
-
     -- Draw cards in hand (overlap cards when there are many)
     for i, card in ipairs(deck.actions) do
         if i ~= deck.selectedIdx then
             local x, y = calculateCardPosition(i, numCards)
-            drawCard(card, x, y, false, state)
+            drawCard(card, x, y, false, ctx)
         end
     end
 
@@ -125,19 +148,19 @@ function Renderer.drawHand(deck, ctx)
     for i, card in ipairs(deck.hand) do
         if i ~= handSelectedIdx then
             local x, y = calculateCardPosition(#deck.actions + i, numCards)
-            drawCard(card, x, y, false, state)
+            drawCard(card, x, y, false, ctx)
         end
     end
 
     if deck.actions[deck.selectedIdx] then
         local x, y = calculateCardPosition(deck.selectedIdx, numCards)
-        drawCard(deck.actions[deck.selectedIdx], x, y, true, state)
+        drawCard(deck.actions[deck.selectedIdx], x, y, true, ctx)
     end
 
     local hand_idx = deck.selectedIdx - #deck.actions
     if deck.hand[hand_idx] then
         local x, y = calculateCardPosition(#deck.actions + hand_idx, numCards)
-        drawCard(deck.hand[hand_idx], x, y, true, state)
+        drawCard(deck.hand[hand_idx], x, y, true, ctx)
     end
 end
 

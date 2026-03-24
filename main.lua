@@ -1,5 +1,6 @@
 local StateManager = require("src.state_manager")
 local DeckManager = require("src.systems.cards.deck_manager")
+local EquipmentManager = require("src.systems.equipment.equipment_manager")
 local EnemyManager = require("src.systems.enemies.enemy_manager")
 local MapManager = require("src.systems.map.map_manager")
 local Player = require("src.systems.player.player")
@@ -7,6 +8,7 @@ local Player = require("src.systems.player.player")
 local context = {
     state = StateManager,
     deck = DeckManager,
+    equipment = EquipmentManager,
     enemies = EnemyManager,
     map = MapManager,
     player = Player
@@ -80,6 +82,7 @@ function love.load()
     require("src.systems.player.player")
 
     DeckManager:initialize()
+    EquipmentManager:initialize(context)
     EnemyManager:initialize()
     MapManager:initialize(context)
 
@@ -90,6 +93,7 @@ end
 
 function love.update(dt)
     StateManager:update()
+    DeckManager:update(context)
     updateFeedback(dt)
 end
 

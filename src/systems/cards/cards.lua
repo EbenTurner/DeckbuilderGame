@@ -5,16 +5,15 @@ local CardDB = {}
 ---@field id string
 ---@field instanceId integer?               Unique id for a specific card instance
 ---@field name string
----@field type "EVENT"|"ASSET"
----@field combat_only boolean?               Clarify whether events are combat only or not
----@field slot "weapon"?                    TODO: add more as I add more assets
+---@field is_action boolean?
+---@field combat_only boolean?              Clarify whether cards are combat only or not
 ---@field description string
 ---@field targeted boolean?
 ---@field cost number?
 ---@field actionCost number?
 ---@field damage number?
+---@field block number?
 ---@field effect function?                  The instant effect of the card
----@field transforms table<string, string>? Maps old cards to replacements e.g. with weapons
 
 ---@param data Card
 ---@return Card
@@ -22,16 +21,15 @@ function CardDB.create(data)
     local card = {
         id          = data.id,
         name        = data.name,
-        type        = data.type,
+        is_action   = data.is_action   or false,
         combat_only = data.combat_only or false,
-        slot        = data.slot,
         targeted    = data.targeted    or false,
         cost        = data.cost        or 0,
         actionCost  = data.actionCost  or 1,
         damage      = data.damage,
+        block       = data.block,
         description = data.description,
         effect      = data.effect,
-        transforms  = data.transforms,
     }
     return card
 end
@@ -67,18 +65,6 @@ CardDB.library = {
         end,
     }),
 
-    longsword = CardDB.create({
-        id = "longsword",
-        name = "Longsword",
-        type = "ASSET",
-        slot = "weapon",
-        cost = 1,
-        description = "Replaces 'Attack' with 'Slice' (3 dmg).",
-        transforms = {
-            attack = "slice"
-        },
-    }),
-
     sprint = CardDB.create({
         id = "sprint",
         name = "Sprint",
@@ -88,7 +74,76 @@ CardDB.library = {
         effect = function(self, ctx)
             ctx.state:switch("roaming", { speed = 3 })
         end,
-    })
+    }),
+
+    cleave = CardDB.create({
+        id = "cleave",
+        name = "Cleave",
+        type = "EVENT",
+        combat_only = true,
+        cost = 1,
+        damage = 2,
+        description = "Deal 2 damage to all enemies.",
+        effect = function(self, ctx)
+            for _, target in ipairs(ctx.enemies.engaged_enemies) do
+                target.hp = target.hp - self.damage
+            end
+        end,
+    }),
+
+    overhead_slash = CardDB.create({
+        id = "overhead_slash",
+        name = "Overhead Slash",
+        type = "EVENT",
+        combat_only = true,
+        targeted = true,
+        cost = 2,
+        damage = 5,
+        description = "Deal 5 damage to an enemy.",
+        effect = function(self, ctx, target)
+            target.hp = target.hp - self.damage
+        end,
+    }),
+
+    rush_attack = CardDB.create({
+        id = "rush_attack",
+        name = "Rush Attack",
+        type = "EVENT",
+        combat_only = true,
+        targeted = true,
+        cost = 1,
+        damage = 7,
+        description = "Deal 7 damage to an enemy, add unbalanced to your draw pile.",
+        effect = function(self, ctx, target)
+            target.hp = target.hp - self.damage
+        end,
+    }),
+
+    defend = CardDB.create({
+        id = "defend",
+        name = "Defend",
+        type = "EVENT",
+        cost = 1,
+        block = 3,
+        description = "Gain 3 block.",
+        effect = function(self, ctx)
+            ctx.player.block = ctx.player.block + self.block
+        end,
+    }),
+
+    shield_bash = CardDB.create({
+        id = "shield_bash",
+        name = "Shield Bash",
+        type = "EVENT",
+        combat_only = true,
+        targeted = true,
+        cost = 1,
+        damage = 3,
+        description = "Deal 3 + current block damage to an enemy.",
+        effect = function(self, ctx, target)
+            target.hp = target.hp - (self.damage + ctx.player.block)
+        end,
+    }),
 }
 
 ---@param id string

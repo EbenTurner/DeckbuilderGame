@@ -18,7 +18,13 @@ local EnemyDB = {}
 local EnemyFunctions = {}
 
 function EnemyFunctions:attack(ctx)
-    ctx.player.hp = ctx.player.hp - self.damage
+    if ctx.player.block >= self.damage then
+        ctx.player.block = ctx.player.block - self.damage
+    else
+        local hp_loss = self.damage - ctx.player.block
+        ctx.player.block = 0
+        ctx.player.hp = ctx.player.hp - hp_loss
+    end
 end
 
 function EnemyFunctions:moveTowardsPlayer(ctx)

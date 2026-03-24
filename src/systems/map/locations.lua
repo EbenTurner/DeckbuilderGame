@@ -51,7 +51,7 @@ LocationDB.library = {
         id = "boss",
         name = "Boss",
         description = "OH NO.",
-        enter = function(self, ctx)
+        reveal = function(self, ctx)
             ctx.enemies:spawn("slime", self)
         end
     }),

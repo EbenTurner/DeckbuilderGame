@@ -53,9 +53,10 @@ end
 
 
 function StateManager:draw()
-    local deck = self.ctx.deck
-    local map = self.ctx.map
-    local player = self.ctx.player
+    local deck = self.ctx.deck ---@type DeckManager
+    local map = self.ctx.map ---@type MapManager
+    local player = self.ctx.player ---@type Player
+    local equipment = self.ctx.equipment ---@type EquipmentManager
 
     -- 1. UI information
     UI.resetPrint()
@@ -63,10 +64,12 @@ function StateManager:draw()
     UI.print("Current Location: " .. map.current.name)
     UI.print(map.current.description)
     UI.print("Player health: " .. player.hp .. "/" .. player.max_hp)
+    UI.print("Block: " .. player.block)
     UI.print("Actions: " .. player.actions .. "/" .. player.max_actions)
     UI.print("Mana: " .. player.mana .. "/" .. player.max_mana)
-    if deck.equipment.weapon then
-        UI.print("Equipped weapon: " .. deck.equipment.weapon.name)
+
+    for slot, item in pairs(equipment.equipment) do
+        UI.print(slot .. ": " .. item.name)
     end
 
     -- 2. Draw current environment (e.g. Combat enemies)

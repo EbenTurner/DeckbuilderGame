@@ -1,37 +1,45 @@
 local CardDB = require("src.systems.cards.cards")
 local ActionDB = require("src.systems.cards.actions")
 
----@class Equipment
----@field weapon Card|nil
-
 ---@class DeckManager
 ---@field deck Card[]
 ---@field hand Card[]
----@field _basehand Card[]
+---@field _base_hand Card[]
 ---@field discard Card[]
 ---@field actions Action[]
----@field _baseActions Action[]
----@field equipment Equipment
+---@field _base_actions Action[]
 ---@field selectedIdx integer
 ---@field maxHandSize integer
 ---@field _instance_counter integer
-local DeckManager = {}
-
-DeckManager.deck = {}
-DeckManager.hand = {}
-DeckManager._baseHand = {}
-DeckManager.discard = {}
-DeckManager.actions = {}
-DeckManager._baseActions = {}
-DeckManager.equipment = {
-    weapon = nil
+local DeckManager = {
+    deck = {},
+    hand = {},
+    _base_hand = {},
+    discard = {},
+    actions = {},
+    _base_actions = {},
+    selectedIdx = 1,
+    maxHandSize = 10,
+    _instance_counter = 0
 }
 
-DeckManager.selectedIdx = 1
-DeckManager.maxHandSize = 10
-DeckManager._instance_counter = 0
+function DeckManager:initialize()
+    -- Create a standard starter set: to be replaced later
+    self:addAction("attack")
+    self:addAction("move")
+    self:addCard("sprint")
+
+    self:shuffle()
+end
+
+---@param ctx table
+function DeckManager:update(ctx)
+    -- sync the base hand and shown hand
+    self:sync(ctx)
+end
 
 ---@param id string
+---@return Card
 function DeckManager:addCard(id)
     local template = CardDB:get(id)
     assert(template, "No card associated with template for id: " .. id)
@@ -44,6 +52,32 @@ function DeckManager:addCard(id)
     setmetatable(newCard, { __index = template })
 
     table.insert(self.deck, newCard)
+
+    return newCard
+end
+
+---@param card Card
+function DeckManager:removeCard(card)
+    for i = #self.deck, 1, -1 do
+        if self.deck[i] == card then
+            table.remove(self.deck, i)
+            break
+        end
+    end
+
+    for i = #self.hand, 1, -1 do
+        if self.hand[i] == card then
+            self:removeFromHand(i)
+            break
+        end
+    end
+
+    for i = #self.discard, 1, -1 do
+        if self.discard[i] == card then
+            table.remove(self.discard, i)
+            break
+        end
+    end
 end
 
 ---@param id string
@@ -58,21 +92,7 @@ function DeckManager:addAction(id)
     }
     setmetatable(newAction, { __index = template })
 
-    table.insert(self._baseActions, newAction)
-
-    self:sync()
-end
-
-function DeckManager:initialize()
-    -- Create a standard starter set: to be replaced later
-    self:addAction("attack")
-    self:addAction("move")
-    self:addCard("ice_bolt")
-    self:addCard("fireball")
-    self:addCard("longsword")
-    self:addCard("sprint")
-
-    self:shuffle()
+    table.insert(self._base_actions, newAction)
 end
 
 -- Initial deck shuffle
@@ -96,36 +116,34 @@ function DeckManager:reshuffle()
 end
 
 -- Updates the current effective hand using base hand
--- Should be triggered every time the potential hand state has changed (e.g. drawing, equipping)
-function DeckManager:sync()
+-- TODO: does this need to still exist?
+function DeckManager:sync(ctx)
     self.hand = {}
-    for i, base in ipairs(self._baseHand) do
-        self.hand[i] = self:getEffectiveCard(base)
+    for i, base in ipairs(self._base_hand) do
+        self.hand[i] = self:getEffectiveCard(base, ctx)
     end
 
     self.actions = {}
-    for i, base in ipairs(self._baseActions) do
-        local effective = self:getEffectiveCard(base)
-
+    for i, base in ipairs(self._base_actions) do
+        local effective = self:getEffectiveCard(base, ctx)
         ---@cast effective Action
+
         self.actions[i] = effective
     end
 end
 
 function DeckManager:addToHand(card)
-    table.insert(self._baseHand, card)
-    self:sync()
+    table.insert(self._base_hand, card)
 end
 
 function DeckManager:removeFromHand(index)
-    local card = table.remove(self._baseHand, index)
-    self:sync()
+    local card = table.remove(self._base_hand, index)
     return card
 end
 
 function DeckManager:clearHand()
-    for i = #self._baseHand, 1, -1 do
-        local card = table.remove(self._baseHand, i)
+    for i = #self._base_hand, 1, -1 do
+        local card = table.remove(self._base_hand, i)
         table.insert(self.discard, card)
     end
 end
@@ -207,42 +225,36 @@ function DeckManager:playCard(ctx, target)
         card:effect(ctx)
     end
 
-    if card.type == "ACTION" then
+    if card.is_action then
         return
     end
 
     self:removeFromHand(idx)
+    self:sync(ctx)
     if self.selectedIdx > self:handSize() then
         if self:handSize() then self.selectedIdx = self:handSize() else self.selectedIdx = 1 end
     end
 
-    if card.type == "ASSET" then
-        self:equipAsset(card)
-    else
-        table.insert(self.discard, card)
-    end
-    self:sync()
-end
-
----@param asset Card
-function DeckManager:equipAsset(asset)
-    assert(asset.slot, "The asset " .. asset.name .. " does not have a slot defined.")
-    self.equipment[asset.slot] = asset
+    table.insert(self.discard, card)
 end
 
 ---@param originalCard Card
+---@param ctx table
 ---@return Card
-function DeckManager:getEffectiveCard(originalCard)
-    local weapon = self.equipment.weapon
+function DeckManager:getEffectiveCard(originalCard, ctx)
+    ---@type table<string, Equipment|nil>
+    local equipmentMap = ctx.equipment.equipment
 
-    if weapon and weapon.transforms[originalCard.id] then
-        local transformedId = weapon.transforms[originalCard.id]
-        local effectiveData = ActionDB:get(transformedId)
+    for _, item in pairs(equipmentMap) do
+        if item.transforms and item.transforms[originalCard.id] then
+            local transformedId = item.transforms[originalCard.id]
+            local effectiveData = ActionDB:get(transformedId)
 
-        return setmetatable({
-            instanceId = originalCard.instanceId,
-            isTransformed = true
-        }, { __index = effectiveData })
+            return setmetatable({
+                instanceId = originalCard.instanceId,
+                isTransformed = true
+            }, { __index = effectiveData })
+        end
     end
 
     return originalCard
