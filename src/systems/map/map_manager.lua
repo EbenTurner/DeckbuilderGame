@@ -28,6 +28,11 @@ function MapManager:initialize(ctx)
     self:enterLocation(startRoom, ctx)
 end
 
+---@return Location[]
+function MapManager:getLocations()
+    return self.locations
+end
+
 ---@param id string
 ---@param x integer
 ---@param y integer
@@ -122,6 +127,11 @@ function MapManager:getLocationsWithin(distance)
     end
 
     return result
+end
+
+---@return Location[]
+function MapManager:getLocationsInSpeed()
+    return self:getLocationsWithin(self.speed)
 end
 
 ---@param dx integer

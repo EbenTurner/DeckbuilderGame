@@ -14,6 +14,10 @@ local CardDB = {}
 ---@field damage number?
 ---@field block number?
 ---@field effect function?                  The instant effect of the card
+---@field x number?                         X position of card
+---@field y number?                         Y position of card
+---@field w number?                         Width of card
+---@field h number?                         Height of card
 
 ---@param data Card
 ---@return Card

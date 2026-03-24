@@ -9,8 +9,12 @@ local LocationDB = {}
 ---@field reveal function?
 ---@field revealed boolean?
 ---@field connections Location[]? The locations an instance is connected to
----@field x integer?    Coords set when location initialized
+---@field x integer?            Coords set when location initialized
 ---@field y integer?
+---@field screen_x number?      Actual x position on screen
+---@field screen_y number?
+---@field w number?
+---@field h number?
 ---@field spawns string[]?
 
 local function noop() end
@@ -51,7 +55,7 @@ LocationDB.library = {
         id = "boss",
         name = "Boss",
         description = "OH NO.",
-        reveal = function(self, ctx)
+        enter = function(self, ctx)
             ctx.enemies:spawn("slime", self)
         end
     }),

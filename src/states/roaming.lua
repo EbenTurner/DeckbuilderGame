@@ -25,7 +25,12 @@ function Roaming:enter(data)
 end
 
 function Roaming:update(dt)
-    -- Update roaming
+    self.map.selected_location = nil
+    for _, location in ipairs(self.map:getLocationsInSpeed()) do
+        if Utils.checkMouseCollision(location.screen_x, location.screen_y, location.w, location.h) then
+            self.map.selected_location = location
+        end
+    end
 end
 
 function Roaming:exit()
@@ -33,7 +38,7 @@ function Roaming:exit()
     self.ctx.map.selected_location = nil
 end
 
----@param ctx table
+---@param ctx Context
 function Roaming:draw(ctx)
     self.ctx.map:draw(ctx)
 end
@@ -53,6 +58,11 @@ function Roaming:keypressed(key)
     elseif key == "escape" then
         self.state:switch("passive")
     end
+end
+
+function Roaming:onClick()
+    self.map:moveTo(self.map.selected_location, self.ctx)
+    self.state:switch("passive")
 end
 
 return Roaming

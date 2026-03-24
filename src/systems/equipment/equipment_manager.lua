@@ -1,8 +1,11 @@
 local EquipmentDB = require("src.systems.equipment.equipment")
+local UI = require("src.ui.renderer")
 
 ---@class EquipmentManager
 ---@field equipment table<string, Equipment|nil>
 ---@field _instance_counter integer
+---@field slot_hitboxes table<string, table<string, number>>
+---@field selected_slot_id string
 local EquipmentManager = {
     equipment = {},
     _instance_counter = 0
@@ -57,6 +60,11 @@ function EquipmentManager:unequip(equipment, deck)
     for _, card in ipairs(equipment.spawned_cards) do
         deck:removeCard(card)
     end
+end
+
+---@param ctx Context
+function EquipmentManager:draw(ctx)
+    UI.drawEquipment(ctx)
 end
 
 return EquipmentManager

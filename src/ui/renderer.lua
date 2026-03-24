@@ -4,13 +4,20 @@ local screenW = love.graphics.getWidth()
 local screenH = love.graphics.getHeight()
 
 local infoWidth = screenW * 0.2
+local infoHeight = screenH * 0.3
+local equipmentWidth = infoWidth
+local equipmentHeight = screenH - infoHeight
 local mainWidth = screenW - infoWidth
 local handHeight = screenH * 0.35
 local mainHeight = screenH - handHeight
 
 local layout = {
     -- Screen zones
-    infoZone = { x = 0, y = 0, w = infoWidth, h = mainHeight },
+    infoZone = { x = 0, y = 0, w = infoWidth, h = infoHeight },
+    equipmentZone = { 
+        x = 0, y = infoHeight, w = equipmentWidth, h = equipmentHeight,
+        slotSize = equipmentWidth * 0.4, padding = equipmentWidth * 0.05
+    },
     mainZone = { x = infoWidth, y = 0, w = mainWidth, h = mainHeight },
     handZone = { x = 0, y = mainHeight, w = screenW, h = handHeight },
 
@@ -22,32 +29,31 @@ local layout = {
 
 -- Draws a single enemy
 ---@param enemy Enemy
----@param x integer
----@param y integer
-function Renderer.drawEnemy(enemy, x, y, isSelected)
+---@param isSelected boolean
+function Renderer.drawEnemy(enemy, isSelected)
     -- Background Box
     love.graphics.setColor(0.2, 0.2, 0.2, 0.8)
-    love.graphics.rectangle("fill", x, y, 120, 120, 5, 5)
+    love.graphics.rectangle("fill", enemy.x, enemy.y, enemy.w, enemy.h, 5, 5)
 
     -- Border
     love.graphics.setColor(isSelected and {1, 1, 0} or {1, 1, 1})
     love.graphics.setLineWidth(isSelected and 3 or 1)
-    love.graphics.rectangle("line", x, y, 120, 120, 5, 5)
+    love.graphics.rectangle("line", enemy.x, enemy.y, enemy.w, enemy.h, 5, 5)
 
     -- Health Bar Background
     love.graphics.setColor(0.5, 0.1, 0.1)
-    love.graphics.rectangle("fill", x + 10, y + 90, 100, 10)
+    love.graphics.rectangle("fill", enemy.x + 10, enemy.y + 90, enemy.w * 0.8, 10)
 
     -- Health Bar Fill
     local hpPercent = enemy.hp / enemy.max_hp
     love.graphics.setColor(0.2, 0.8, 0.2)
-    love.graphics.rectangle("fill", x + 10, y + 90, 100 * hpPercent, 10)
+    love.graphics.rectangle("fill", enemy.x + 10, enemy.y + 90, enemy.w * 0.8 * hpPercent, 10)
 
     -- Text
     love.graphics.setColor(1, 1, 1)
-    love.graphics.printf(enemy.name, x, y + 20, 120, "center")
-    love.graphics.printf(enemy.damage .. " dmg", x, y + 60, 120, "center")
-    love.graphics.printf(enemy.hp .. "/" .. enemy.max_hp, x, y + 100, 120, "center")
+    love.graphics.printf(enemy.name, enemy.x, enemy.y + 20, 120, "center")
+    love.graphics.printf(enemy.damage .. " dmg", enemy.x, enemy.y + 60, 120, "center")
+    love.graphics.printf(enemy.hp .. "/" .. enemy.max_hp, enemy.x, enemy.y + 100, 120, "center")
 end
 
 local Palette = {
@@ -61,15 +67,14 @@ local Palette = {
 }
 
 ---@param card Card
----@param x integer
----@param y integer
 ---@param isSelected boolean
----@param ctx table
-local function drawCard(card, x, y, isSelected, ctx)
-    local state = ctx.state.current.name ---@type string
-    local currentMana = ctx.player.mana ---@type integer
+---@param ctx Context
+local function drawCard(card, isSelected, ctx)
+    local state = ctx.state.current.name
+    local currentMana = ctx.player.mana
 
-    if isSelected then y = y - layout.liftH end -- lift selected card
+    local draw_y = card.y or 0
+    if isSelected then draw_y = card.y - layout.liftH end
 
     -- 1. DRAW THE CARD BODY (The Background)
     local bgColor = Palette.event
@@ -83,7 +88,7 @@ local function drawCard(card, x, y, isSelected, ctx)
     end
 
     love.graphics.setColor(bgColor)
-    love.graphics.rectangle("fill", x, y, layout.cardW, layout.cardH)
+    love.graphics.rectangle("fill", card.x, draw_y, card.w, card.h)
 
     -- 2. DRAW THE CARD BORDER
 
@@ -91,21 +96,21 @@ local function drawCard(card, x, y, isSelected, ctx)
     if isSelected then
         love.graphics.setColor(Palette.highlight)
         love.graphics.setLineWidth(4)
-        love.graphics.rectangle("line", x - 4, y - 4, layout.cardW + 8, layout.cardH + 8)
+        love.graphics.rectangle("line", card.x - 4, draw_y - 4, card.w + 8, card.h + 8)
     end
 
     love.graphics.setColor(borderColor)
     love.graphics.setLineWidth(2)
-    love.graphics.rectangle("line", x, y, layout.cardW, layout.cardH)
+    love.graphics.rectangle("line", card.x, draw_y, card.w, card.h)
 
     -- 3. DRAW THE TEXT (The Foreground)
     love.graphics.setColor(Palette.text)
-    love.graphics.print(card.name, x + 10, y + 10)
+    love.graphics.print(card.name, card.x + 10, draw_y + 10)
 
     if card.cost > currentMana then
         love.graphics.setColor(Palette.text_error)
     end
-    love.graphics.print("Cost: " .. card.cost, x + 10, y + layout.cardH - 30)
+    love.graphics.print("Cost: " .. card.cost, card.x + 10, draw_y + card.h - 30)
 end
 
 -- Helper function for positioning the cards (overlaps them if needed)
@@ -131,45 +136,47 @@ local function calculateCardPosition(index, numCards)
 end
 
 ---@param deck DeckManager
----@param ctx table
+---@param ctx Context
 function Renderer.drawHand(deck, ctx)
-    local numCards = #deck.actions + #deck.hand
+    local numActions = #deck.actions
+    local numHand = #deck.hand
+    local totalCards = numActions + numHand
 
-    -- Draw cards in hand (overlap cards when there are many)
+    -- 1. Helper to handle the "Update + Draw" logic per card
+    local function processCard(card, i, isTotalIndex)
+        local x, y = calculateCardPosition(isTotalIndex, totalCards)
+
+        -- Update the card's physical data for the Mouse Utility
+        card.x, card.y = x, y
+        card.w, card.h = layout.cardW, layout.cardH
+
+        -- Draw the card (only if it's NOT the selected one; we draw that last for layering)
+        if isTotalIndex ~= deck.selected_idx then
+            drawCard(card, false, ctx)
+        end
+    end
+
+    -- 2. Process Actions
     for i, card in ipairs(deck.actions) do
-        if i ~= deck.selectedIdx then
-            local x, y = calculateCardPosition(i, numCards)
-            drawCard(card, x, y, false, ctx)
-        end
+        processCard(card, i, i)
     end
 
-    -- set handSelectedIdx relative to hand positioning
-    local handSelectedIdx = deck.selectedIdx - #deck.actions
+    -- 3. Process Hand
     for i, card in ipairs(deck.hand) do
-        if i ~= handSelectedIdx then
-            local x, y = calculateCardPosition(#deck.actions + i, numCards)
-            drawCard(card, x, y, false, ctx)
-        end
+        processCard(card, i, numActions + i)
     end
 
-    if deck.actions[deck.selectedIdx] then
-        local x, y = calculateCardPosition(deck.selectedIdx, numCards)
-        drawCard(deck.actions[deck.selectedIdx], x, y, true, ctx)
-    end
-
-    local hand_idx = deck.selectedIdx - #deck.actions
-    if deck.hand[hand_idx] then
-        local x, y = calculateCardPosition(#deck.actions + hand_idx, numCards)
-        drawCard(deck.hand[hand_idx], x, y, true, ctx)
+    -- 4. Draw the Selected Card last (so it appears on top)
+    local selected_card = deck.actions[deck.selected_idx] or deck.hand[deck.selected_idx - numActions]
+    if selected_card then
+        drawCard(selected_card, true, ctx)
     end
 end
 
+---@param ctx Context
 function Renderer.drawMap(ctx)
-    ---@type MapManager
     local map = ctx.map
-    ---@type EnemyManager
     local enemies = ctx.enemies
-
     local zone = layout.mainZone
     local GRID_SIZE = 100
     local box_size = 30
@@ -177,16 +184,10 @@ function Renderer.drawMap(ctx)
     -- Determine map bounds
     local minX, maxX, minY, maxY = math.huge, -math.huge, math.huge, -math.huge
     for _, loc in ipairs(map.locations) do
-        minX = math.min(minX, loc.x)
-        maxX = math.max(maxX, loc.x)
-        minY = math.min(minY, loc.y)
-        maxY = math.max(maxY, loc.y)
+        minX, maxX = math.min(minX, loc.x), math.max(maxX, loc.x)
+        minY, maxY = math.min(minY, loc.y), math.max(maxY, loc.y)
     end
-
-    -- Determine map center
-    local mapMidX = (minX + maxX) / 2
-    local mapMidY = (minY + maxY) / 2
-
+    local mapMidX, mapMidY = (minX + maxX) / 2, (minY + maxY) / 2
     local offsetX = (zone.x + zone.w / 2) - (mapMidX * GRID_SIZE)
     local offsetY = (zone.y + zone.h / 2) - (mapMidY * GRID_SIZE)
 
@@ -194,6 +195,10 @@ function Renderer.drawMap(ctx)
     local function toScreen(gx, gy)
         return gx * GRID_SIZE + offsetX, gy * GRID_SIZE + offsetY
     end
+
+    local mx, my = love.mouse.getPosition()
+    local mouseMoved = (mx ~= Renderer.lastMx or my ~= Renderer.lastMy)
+    Renderer.lastMx, Renderer.lastMy = mx, my
 
     love.graphics.setColor(0.5, 0.5, 0.5)
     for _, loc in ipairs(map.locations) do
@@ -204,37 +209,23 @@ function Renderer.drawMap(ctx)
         end
     end
 
-    local path = {}
-    if map.selected_location ~= map.current then
-        path = map:shortestPath(map.current, map.selected_location)
-    end
+    local path = (map.selected_location ~= map.current) and map:shortestPath(map.current, map.selected_location) or {}
 
     for _, loc in ipairs(map.locations) do
         local sx, sy = toScreen(loc.x, loc.y)
 
+        loc.w, loc.h = box_size, box_size
+        loc.screen_x = sx - (loc.w / 2)
+        loc.screen_y = sy - (loc.h / 2)
+
         local onPath = false -- find locations on the selected path
-        for _, path_loc in ipairs(path) do
-            if loc == path_loc then
-                onPath = true
-            end
-        end
+        for _, path_loc in ipairs(path) do if loc == path_loc then onPath = true end end
 
-        local locationEnemies = enemies:getEnemiesInLocation(loc)
-        local containsEnemies = (#locationEnemies > 0)
-
-        if loc == map.current then
-            love.graphics.setColor(0.2, 0.8, 0.2) -- Current Location: GREEN
-        elseif loc.revealed and containsEnemies then
-            love.graphics.setColor(1, 0.2, 0.2) -- Enemies: RED
-        elseif onPath then
-            if loc.revealed then
-                love.graphics.setColor(0.4, 0.7, 1) -- Unrevealed: AMBER
-            else
-                love.graphics.setColor(1, 0.6, 0) -- Revealed: Blue
-            end
-        else
-            love.graphics.setColor(1, 1, 1) -- Unselected: White
-        end
+        -- Set location colour dependent on conditions
+        if loc == map.current then love.graphics.setColor(0.2, 0.8, 0.2)
+        elseif loc.revealed and #enemies:getEnemiesInLocation(loc) > 0 then love.graphics.setColor(1, 0.2, 0.2)
+        elseif onPath then love.graphics.setColor(loc.revealed and {0.4, 0.7, 1} or {1, 0.6, 0})
+        else love.graphics.setColor(1, 1, 1) end
 
         love.graphics.circle("fill", sx, sy, 10)
 
@@ -250,6 +241,53 @@ function Renderer.drawMap(ctx)
         end
     end
 end
+
+---@param ctx Context
+function Renderer.drawEquipment(ctx)
+    local equip = ctx.equipment.equipment
+    local zone = layout.equipmentZone
+
+    local slots = {
+        { id = "hand1", col = 0, row = 0, label = "L. Hand" },
+        { id = "hand2", col = 1, row = 0, label = "R. Hand" },
+        { id = "body",  col = 0.5, row = 1, label = "Body" } -- 0.5 centers it under the two
+    }
+
+    for _, slot in ipairs(slots) do
+        -- Calculate Screen Position
+        slot.x = zone.x + (slot.col * (zone.slotSize + zone.padding))
+        slot.y = zone.y + (slot.row * (zone.slotSize + zone.padding))
+        slot.w, slot.h = zone.slotSize, zone.slotSize
+
+        -- 1. Draw the Slot Box (The Background)
+        love.graphics.setColor(0.2, 0.2, 0.2, 0.8)
+        love.graphics.rectangle("fill", slot.x, slot.y, slot.w, slot.h, 4)
+
+        -- 2. Draw the Item (if equipped)
+        local item = equip[slot.id]
+        if item then
+            love.graphics.setColor(1, 1, 1)
+            -- Draw a mini version of the card or an icon
+            love.graphics.print(item.name, slot.x + 5, slot.y + 20, 0, 0.7) 
+        else
+            -- Draw Placeholder Label
+            love.graphics.setColor(0.5, 0.5, 0.5)
+            love.graphics.printf(slot.label, slot.x, slot.y + 20, slot.w, "center")
+        end
+
+        -- 3. Highlight if Hovered
+        if ctx.equipment.selected_slot_id == slot.id then
+            love.graphics.setColor(1, 1, 0, 0.5)
+            love.graphics.rectangle("line", slot.x, slot.y, slot.w, slot.h, 4)
+        end
+
+        -- Stamp for the Update loop
+        -- We store this in the context so the State can see it
+        ctx.equipment.slot_hitboxes = ctx.equipment.slot_hitboxes or {}
+        ctx.equipment.slot_hitboxes[slot.id] = { x = slot.x, y = slot.y, w = slot.w, h = slot.h }
+    end
+end
+
 
 -- TODO: remove / change this, used for identifying sections
 function Renderer.drawLayout()

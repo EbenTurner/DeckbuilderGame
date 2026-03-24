@@ -11,7 +11,7 @@ local UI = require("src.ui.renderer")
 ---@class StateManager
 ---@field states States
 ---@field current State
----@field ctx table
+---@field ctx Context
 local StateManager = {}
 
 StateManager.states = {
@@ -51,12 +51,11 @@ function StateManager:update(dt)
     if self.current then self.current:update(dt) end
 end
 
-
 function StateManager:draw()
-    local deck = self.ctx.deck ---@type DeckManager
-    local map = self.ctx.map ---@type MapManager
-    local player = self.ctx.player ---@type Player
-    local equipment = self.ctx.equipment ---@type EquipmentManager
+    local deck = self.ctx.deck
+    local map = self.ctx.map
+    local player = self.ctx.player
+    local equipment = self.ctx.equipment
 
     -- 1. UI information
     UI.resetPrint()
@@ -68,15 +67,12 @@ function StateManager:draw()
     UI.print("Actions: " .. player.actions .. "/" .. player.max_actions)
     UI.print("Mana: " .. player.mana .. "/" .. player.max_mana)
 
-    for slot, item in pairs(equipment.equipment) do
-        UI.print(slot .. ": " .. item.name)
-    end
-
     -- 2. Draw current environment (e.g. Combat enemies)
     self.current:draw(self.ctx)
 
     -- 3. Draw Hand from the injected context
     UI.drawHand(deck, self.ctx)
+    equipment:draw(self.ctx)
 end
 
 function StateManager:keypressed(key)

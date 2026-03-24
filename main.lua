@@ -4,7 +4,14 @@ local EquipmentManager = require("src.systems.equipment.equipment_manager")
 local EnemyManager = require("src.systems.enemies.enemy_manager")
 local MapManager = require("src.systems.map.map_manager")
 local Player = require("src.systems.player.player")
+_G.Utils = require("src.utils")
 
+---@class Context
+---@field state StateManager
+---@field deck DeckManager
+---@field equipment EquipmentManager
+---@field enemies EnemyManager
+---@field map MapManager
 local context = {
     state = StateManager,
     deck = DeckManager,
@@ -49,7 +56,7 @@ local function drawFeedback()
     -- Draw Box with alpha transparency
     love.graphics.setColor(0, 0, 0, 0.8 * feedback.alpha)
     love.graphics.rectangle("fill", x, y, width, 40, 10)
-    
+
     -- Draw Border
     love.graphics.setColor(1, 0.3, 0.3, feedback.alpha) -- Reddish tint for errors
     love.graphics.setLineWidth(2)
@@ -58,7 +65,7 @@ local function drawFeedback()
     -- Draw Text
     love.graphics.setColor(1, 1, 1, feedback.alpha)
     love.graphics.printf(feedback.message, x, y + 12, width, "center")
-    
+
     -- Always reset color!
     love.graphics.setColor(1, 1, 1, 1)
 end
@@ -101,6 +108,14 @@ end
 function love.draw()
     StateManager:draw()
     drawFeedback()
+end
+
+-- Handle mouse input
+function love.mousereleased(x, y, button)
+    if button == 1 then
+        local activeState = StateManager.current
+        activeState:onClick()
+    end
 end
 
 -- Handle keyboard input

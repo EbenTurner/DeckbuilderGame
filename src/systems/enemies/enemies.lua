@@ -13,6 +13,10 @@ local EnemyDB = {}
 ---@field alive boolean?    set on spawn
 ---@field attack function?
 ---@field moveTowardsPlayer function?
+---@field x number?
+---@field y number?
+---@field w number?
+---@field h number?
 
 -- EnemyFunctons is a way to link defined functions to every enemy object
 local EnemyFunctions = {}

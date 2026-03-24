@@ -8,7 +8,7 @@ local ActionDB = require("src.systems.cards.actions")
 ---@field discard Card[]
 ---@field actions Action[]
 ---@field _base_actions Action[]
----@field selectedIdx integer
+---@field selected_idx integer
 ---@field maxHandSize integer
 ---@field _instance_counter integer
 local DeckManager = {
@@ -18,7 +18,7 @@ local DeckManager = {
     discard = {},
     actions = {},
     _base_actions = {},
-    selectedIdx = 1,
+    selected_idx = 1,
     maxHandSize = 10,
     _instance_counter = 0
 }
@@ -32,10 +32,23 @@ function DeckManager:initialize()
     self:shuffle()
 end
 
----@param ctx table
+---@param ctx Context
 function DeckManager:update(ctx)
     -- sync the base hand and shown hand
     self:sync(ctx)
+end
+
+function DeckManager:getHand()
+    local joined = {}
+    for _, card in ipairs(self.actions) do
+        table.insert(joined, card)
+    end
+
+    for _, card in ipairs(self.hand) do
+        table.insert(joined, card)
+    end
+
+    return joined
 end
 
 ---@param id string
@@ -136,8 +149,14 @@ function DeckManager:addToHand(card)
     table.insert(self._base_hand, card)
 end
 
-function DeckManager:removeFromHand(index)
-    local card = table.remove(self._base_hand, index)
+---@param idx integer   Should be relative to the entire hand (actions included)
+function DeckManager:removeFromHand(idx)
+    if idx <= #self.actions then return end
+
+    -- Get idx relative to hand array
+    idx = idx - #self.actions
+
+    local card = table.remove(self._base_hand, idx)
     return card
 end
 
@@ -163,7 +182,7 @@ function DeckManager:startTurn()
         self:drawCard()
     end
 
-    self.selectedIdx = 1
+    self.selected_idx = 1
 end
 
 
@@ -179,28 +198,45 @@ end
 function DeckManager:cycle(direction)
     local hand_size = self:handSize()
     if direction == "right" then
-        self.selectedIdx = self.selectedIdx + 1
-        if self.selectedIdx > hand_size then self.selectedIdx = 1 end
+        self.selected_idx = self.selected_idx + 1
+        if self.selected_idx > hand_size then self.selected_idx = 1 end
     elseif direction == "left" then
-        self.selectedIdx = self.selectedIdx - 1
-        if self.selectedIdx < 1 then self.selectedIdx = hand_size end
+        self.selected_idx = self.selected_idx - 1
+        if self.selected_idx < 1 then self.selected_idx = hand_size end
     end
 end
 
----@return Card, integer
-function DeckManager:getSelectedCard()
-    if self.selectedIdx <= #self.actions then
-        return self.actions[self.selectedIdx], self.selectedIdx
+---@param idx integer
+---@return Card?
+function DeckManager:getCard(idx)
+    if not idx or idx <= 0 then return nil end
+
+    if idx <= #self.actions then
+        return self.actions[idx]
     else
-        local idx = self.selectedIdx - #self.actions
-        return self.hand[self.selectedIdx - #self.actions], idx
+        idx = idx - #self.actions
+        return self.hand[idx]
     end
 end
 
----@param ctx table
----@param target any?   -- should replace with some "Entity" class or something
-function DeckManager:playCard(ctx, target)
-    local card, idx = self:getSelectedCard()
+---@return Card?, integer
+function DeckManager:getSelectedCard()
+    return self:getCard(self.selected_idx), self.selected_idx
+end
+
+
+--TODO: replace relative card index with an overall index
+---@param ctx Context
+---@param target any?       TODO: Should replace with some "Entity" class or something
+---@param idx integer?      If we are playing a targeted card, this is it
+function DeckManager:playCard(ctx, target, idx)
+    local card
+
+    if idx then
+        card = self:getCard(idx)
+    else
+        card, idx = self:getSelectedCard()
+    end
 
     if not card then return end
 
@@ -231,18 +267,14 @@ function DeckManager:playCard(ctx, target)
 
     self:removeFromHand(idx)
     self:sync(ctx)
-    if self.selectedIdx > self:handSize() then
-        if self:handSize() then self.selectedIdx = self:handSize() else self.selectedIdx = 1 end
-    end
 
     table.insert(self.discard, card)
 end
 
 ---@param originalCard Card
----@param ctx table
+---@param ctx Context
 ---@return Card
 function DeckManager:getEffectiveCard(originalCard, ctx)
-    ---@type table<string, Equipment|nil>
     local equipmentMap = ctx.equipment.equipment
 
     for _, item in pairs(equipmentMap) do

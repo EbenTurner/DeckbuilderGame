@@ -4,6 +4,7 @@ local UI = require("src.ui.renderer")
 ---@class Combat : State
 ---@field is_targeting boolean
 ---@field target_idx integer
+---@field targeting_card integer
 local Combat = setmetatable({}, { __index = State })
 Combat.__index = Combat
 
@@ -13,6 +14,7 @@ function Combat:new(ctx)
     ---@cast instance Combat
 
     instance.is_targeting = false
+    instance.targeting_card = nil
 
     return instance
 end
@@ -24,7 +26,7 @@ function Combat:enter(data)
         self.enemies:engage(enemy.instanceId)
     end
 
-    self.deck.selectedIdx = 1
+    self.deck.selected_idx = 1
 end
 
 function Combat:update(dt)
@@ -44,6 +46,27 @@ function Combat:update(dt)
     if #self.enemies.engaged_enemies <= 0 then
         self.state:switch("passive")
     end
+
+    self.deck.selected_idx = 0
+    self.target_idx = 0
+
+    if not self.is_targeting then
+        for i, card in ipairs(self.deck:getHand()) do
+            if card and card.x then
+                if Utils.checkMouseCollision(card.x, card.y, card.w, card.h) then
+                    self.deck.selected_idx = i
+                end
+            end
+        end
+    else
+        for i, enemy in ipairs(self.enemies.engaged_enemies) do
+            -- Ensure your Enemy renderer 'stamps' x, y, w, h similar to cards
+            if enemy.x and Utils.checkMouseCollision(enemy.x, enemy.y, enemy.w, enemy.h) then
+                self.target_idx = i
+                break
+            end
+        end
+    end
 end
 
 function Combat:exit()
@@ -60,38 +83,51 @@ function Combat:draw(ctx)
     for i, enemy in ipairs(self.enemies.engaged_enemies) do
         local isSelected = (self.is_targeting and self.target_idx == i)
         local x = 400 + (i - 1) * 140 - (#self.enemies.engaged_enemies * 70)
-        UI.drawEnemy(enemy, x, 200, isSelected)
+
+        --TODO: move these hardcoded values
+        enemy.x = x
+        enemy.y = 200
+        enemy.w = 120
+        enemy.h = 120
+
+        UI.drawEnemy(enemy, isSelected)
     end
 end
 
 function Combat:keypressed(key)
-    if not self.is_targeting then
-        -- PHASE 1: Selecting a Card
-        if key == "right" or key == "left" then
-            self.deck:cycle(key)
-        elseif key == "return" then
-            local card = self.deck:getSelectedCard()
-            if card.targeted then
-                self.is_targeting = true
-                self.target_idx = 1 -- Start by targeting the first enemy
-            else
-                self.deck:playCard(self.ctx) -- Play non-targeted card immediately
-            end
-        end
-    else
-        -- PHASE 2: Selecting a Target
-        if key == "left" or key == "up" then
-            self.target_idx = math.max(1, self.target_idx - 1)
-        elseif key == "right" or key == "down" then
-            self.target_idx = math.min(#self.enemies.engaged_enemies, self.target_idx + 1)
-        elseif key == "escape" then
+    if self.is_targeting then
+        if key == "escape" then
             self.is_targeting = false -- Cancel targeting
         elseif key == "return" then
-            -- CONFIRM ATTACK
             local target = self.enemies.engaged_enemies[self.target_idx]
-            self.deck:playCard(self.ctx, target)
-            self.is_targeting = false -- Return to card selection
+            if not target then return end
+
+            self.deck:playCard(self.ctx, target, self.targeting_card)
+            self.is_targeting = false
+            self.targeting_card = nil
         end
+    end
+end
+
+function Combat:onClick()
+    if not self.is_targeting then
+        local card, idx = self.deck:getSelectedCard()
+        if not card then return end
+
+        if card.targeted then
+            self.is_targeting = true
+            self.targeting_card = idx
+            self.target_idx = 1
+        else
+            self.deck:playCard(self.ctx)
+        end
+    else
+        local target = self.enemies.engaged_enemies[self.target_idx]
+        if not target then return end
+
+        self.deck:playCard(self.ctx, target, self.targeting_card)
+        self.is_targeting = false
+        self.targeting_card = nil
     end
 end
 
