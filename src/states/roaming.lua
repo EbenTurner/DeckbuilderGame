@@ -43,23 +43,6 @@ function Roaming:draw(ctx)
     self.ctx.map:draw(ctx)
 end
 
-function Roaming:keypressed(key)
-    if key == "up" then
-        self.map:moveSelected(0, -1)
-    elseif key == "down" then
-        self.map:moveSelected(0, 1)
-    elseif key == "left" then
-        self.map:moveSelected(-1, 0)
-    elseif key == "right" then
-        self.map:moveSelected(1, 0)
-    elseif key == "return" or key == "space" then
-        self.map:moveTo(self.map.selected_location, self.ctx)
-        self.state:switch("passive")
-    elseif key == "escape" then
-        self.state:switch("passive")
-    end
-end
-
 function Roaming:mousereleased(x, y, button)
     self.map:moveTo(self.map.selected_location, self.ctx)
     self.state:switch("passive")

@@ -134,24 +134,6 @@ function MapManager:getLocationsInSpeed()
     return self:getLocationsWithin(self.speed)
 end
 
----@param dx integer
----@param dy integer
-function MapManager:moveSelected(dx, dy)
-    local tx, ty  = self.selected_location.x + dx, self.selected_location.y + dy
-
-    local possibleLocations = self:getLocationsWithin(self.speed)
-
-    -- only want to be able to move hover locations within speed
-    for _, loc in ipairs(possibleLocations) do
-        if loc.x == tx and loc.y == ty then
-            self.selected_location = loc
-            return true
-        end
-    end
-
-    return false
-end
-
 ---@param start Location
 ---@param destination   Location       
 function MapManager:shortestPath(start, destination)
