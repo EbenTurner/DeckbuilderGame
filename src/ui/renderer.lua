@@ -57,13 +57,13 @@ function Renderer.drawEnemy(enemy, isSelected)
 end
 
 local Palette = {
-    event     = { 0.94, 0.90, 0.90 }, 
-    action    = { 0.82, 0.75, 0.60 }, 
-    text      = { 0.15, 0.12, 0.10 }, -- Not pure black, but a "Dried Ink" dark brown
-    text_error = { 0.60, 0.20, 0.20 }, -- Faded Blood/Red Ink
-    disabled  = { 0.40, 0.38, 0.35 }, -- Muted "Mud" color
-    highlight = { 0.85, 0.45, 0.20 }, -- A burnt orange/copper for selection
-    transform = { 0.20, 0.50, 0.20 }, -- A deep forest green for gear-modified cards
+    event       = { 0.94, 0.90, 0.90 },
+    action      = { 0.82, 0.75, 0.60 },
+    text        = { 0.15, 0.12, 0.10 }, -- Not pure black, but a "Dried Ink" dark brown
+    text_error  = { 0.60, 0.20, 0.20 }, -- Faded Blood/Red Ink
+    disabled    = { 0.40, 0.38, 0.35 }, -- Muted "Mud" color
+    highlight   = { 0.85, 0.45, 0.20 }, -- A burnt orange/copper for selection
+    transform   = { 0.20, 0.50, 0.20 }, -- A deep forest green for gear-modified cards
 }
 
 ---@param card Card
@@ -146,7 +146,7 @@ function Renderer.drawHand(deck, ctx)
     local function processCard(card, i, isTotalIndex)
         local x, y = calculateCardPosition(isTotalIndex, totalCards)
 
-        -- Update the card's physical data for the Mouse Utility
+        -- Update the card's physical data
         card.x, card.y = x, y
         card.w, card.h = layout.cardW, layout.cardH
 
@@ -197,7 +197,6 @@ function Renderer.drawMap(ctx)
     end
 
     local mx, my = love.mouse.getPosition()
-    local mouseMoved = (mx ~= Renderer.lastMx or my ~= Renderer.lastMy)
     Renderer.lastMx, Renderer.lastMy = mx, my
 
     love.graphics.setColor(0.5, 0.5, 0.5)
