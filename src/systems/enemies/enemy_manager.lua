@@ -47,6 +47,7 @@ function EnemyManager:engage(instanceId)
     end
 end
 
+--TODO: this function is currently not being used
 ---@param instanceId integer
 function EnemyManager:kill(instanceId)
     for i = #self.engaged_enemies, 1, -1 do

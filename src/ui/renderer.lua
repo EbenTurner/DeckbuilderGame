@@ -255,7 +255,7 @@ function Renderer.drawEquipment(ctx)
 
     for _, slot in ipairs(slots) do
         -- Calculate Screen Position
-        slot.x = zone.x + (slot.col * (zone.slotSize + zone.padding))
+        slot.x = zone.padding + zone.x + (slot.col * (zone.slotSize + zone.padding))
         slot.y = zone.y + (slot.row * (zone.slotSize + zone.padding))
         slot.w, slot.h = zone.slotSize, zone.slotSize
 
@@ -303,6 +303,23 @@ function Renderer.drawLayout()
     -- Hand Section
     love.graphics.setColor(0.1, 0.1, 0.2)
     love.graphics.rectangle("line", layout.handZone.x, layout.handZone.y, layout.handZone.w, layout.handZone.h)
+end
+
+---@param ctx Context
+function Renderer.drawTargetingUI(ctx)
+    if ctx.is_targeting and ctx.active_card then
+        local mx, my = love.mouse.getPosition()
+        local cardX = ctx.active_card.x + (ctx.active_card.w / 2)
+        local cardY = ctx.active_card.y * 1
+
+        -- Draw a line or curve from card to mouse
+        love.graphics.setLineWidth(4)
+        love.graphics.setColor(1, 0, 0, 0.6) -- Semi-transparent red
+        love.graphics.line(cardX, cardY, mx, my)
+
+        -- Draw a reticle at the mouse
+        love.graphics.circle("line", mx, my, 15)
+    end
 end
 
 -- Draw Info Text (Corrected to stay in the 10% column)

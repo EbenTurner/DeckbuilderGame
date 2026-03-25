@@ -118,18 +118,15 @@ end
 
 -- Shuffle discard back into deck
 function DeckManager:reshuffle()
-    if #self.discard > 0 then
-        for i = #self.discard, 2, -1 do
-            local j = math.random(i)
-            self.discard[i], self.discard[j] = self.discard[j], self.discard[i]
-        end
-        self.deck = self.discard
-        self.discard = {}
+    for i = #self.discard, 1, -1 do
+        table.insert(self.deck, self.discard[i])
+        table.remove(self.discard, i)
     end
+
+    self:shuffle()
 end
 
 -- Updates the current effective hand using base hand
--- TODO: does this need to still exist?
 function DeckManager:sync(ctx)
     self.hand = {}
     for i, base in ipairs(self._base_hand) do
@@ -190,22 +187,6 @@ function DeckManager:endTurn()
     self:clearHand()
 end
 
-
-function DeckManager:handSize()
-    return #self.actions + #self.hand
-end
-
-function DeckManager:cycle(direction)
-    local hand_size = self:handSize()
-    if direction == "right" then
-        self.selected_idx = self.selected_idx + 1
-        if self.selected_idx > hand_size then self.selected_idx = 1 end
-    elseif direction == "left" then
-        self.selected_idx = self.selected_idx - 1
-        if self.selected_idx < 1 then self.selected_idx = hand_size end
-    end
-end
-
 ---@param idx integer
 ---@return Card?
 function DeckManager:getCard(idx)
@@ -226,10 +207,10 @@ end
 
 
 --TODO: replace relative card index with an overall index
+---@param idx integer       The card index
 ---@param ctx Context
 ---@param target any?       TODO: Should replace with some "Entity" class or something
----@param idx integer?      If we are playing a targeted card, this is it
-function DeckManager:playCard(ctx, target, idx)
+function DeckManager:playCard(idx, ctx, target)
     local card
 
     if idx then
@@ -241,7 +222,7 @@ function DeckManager:playCard(ctx, target, idx)
     if not card then return end
 
     -- TODO: replace this with proper checking
-    local playable, reason = ctx.player:playCard(card)
+    local playable, reason = ctx.player:canPlayCard(card)
 
     if not playable then
         if reason == "ACTIONS" then
@@ -256,10 +237,13 @@ function DeckManager:playCard(ctx, target, idx)
     end
 
     if card.targeted then
+        if not target then return end
         card:effect(ctx, target)
     elseif card.effect then
         card:effect(ctx)
     end
+
+    ctx.player:playCard(card) -- Do costs here only if card is resolved
 
     if card.is_action then
         return

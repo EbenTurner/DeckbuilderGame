@@ -34,6 +34,16 @@ function State:exit() end
 function State:update(dt) end
 function State:draw(ctx) end
 function State:keypressed(key) end
-function State:onClick() end
+function State:mousepressed(x, y, button) end
+function State:mousereleased(x, y, button) end
+
+---@param idx integer   The index of the card in hand
+function State:setActiveCard(idx)
+    local card = self.deck:getCard(idx)
+
+    self.ctx.active_card = card
+    self.ctx.active_card_idx = idx
+    if card then self.ctx.is_targeting = card.targeted else self.ctx.is_targeting = false end
+end
 
 return State

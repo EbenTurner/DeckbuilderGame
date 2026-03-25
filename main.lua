@@ -12,6 +12,9 @@ _G.Utils = require("src.utils")
 ---@field equipment EquipmentManager
 ---@field enemies EnemyManager
 ---@field map MapManager
+---@field active_card Card
+---@field active_card_idx integer
+---@field is_targeting boolean
 local context = {
     state = StateManager,
     deck = DeckManager,
@@ -110,12 +113,13 @@ function love.draw()
     drawFeedback()
 end
 
+function love.mousepressed(x, y, button)
+    StateManager.current:mousepressed(x, y, button)
+end
+
 -- Handle mouse input
 function love.mousereleased(x, y, button)
-    if button == 1 then
-        local activeState = StateManager.current
-        activeState:onClick()
-    end
+    StateManager.current:mousereleased(x, y, button)
 end
 
 -- Handle keyboard input

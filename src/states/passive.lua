@@ -53,25 +53,24 @@ function Passive:draw(ctx)
     self.ctx.map:draw(ctx)
 end
 
--- Stop combat cards (i.e. attacks) being used outside of combat
--- function Passive:keypressed(key)
---     if key == "right" or key == "left" then
---         self.deck:cycle(key)
---     elseif key == "return" then
---         local card = self.deck:getSelectedCard()
---         if not card then return end
+function Passive:mousepressed(x, y, button)
+    if button == 1 then
+        local _, idx = self.deck:getSelectedCard()
+        self:setActiveCard(idx)
+    end
+end
 
---         if not card.combat_only then
---             self.deck:playCard(self.ctx)
---         end
---     end
--- end
+function Passive:mousereleased(x, y, button)
+    if button == 1 then
+        if self.ctx.active_card_idx > 0 then
+            local card = self.deck:getCard(self.ctx.active_card_idx)
 
-function Passive:onClick()
-    local card = self.deck:getSelectedCard()
-
-    if card and not card.combat_only then
-        self.deck:playCard(self.ctx)
+            if card and not card.combat_only then
+                self.deck:playCard(self.ctx.active_card_idx, self.ctx)
+            end
+        end
+    elseif button == 2 then
+        self:setActiveCard(0)
     end
 end
 

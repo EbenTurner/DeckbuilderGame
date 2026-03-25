@@ -72,6 +72,7 @@ function StateManager:draw()
 
     -- 3. Draw Hand from the injected context
     UI.drawHand(deck, self.ctx)
+    UI.drawTargetingUI(self.ctx)
     equipment:draw(self.ctx)
 end
 

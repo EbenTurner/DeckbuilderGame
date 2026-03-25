@@ -23,17 +23,20 @@ end
 
 ---@param card Card
 ---@return boolean, string
-function Player:playCard(card)
+function Player:canPlayCard(card)
     if card.actionCost > self.actions then
         return false, "ACTIONS"
     elseif card.cost > self.mana then
         return false, "MANA"
     end
 
+    return true, ""
+end
+
+---@param card Card
+function Player:playCard(card)
     self.mana = self.mana - card.cost
     self.actions = self.actions - card.actionCost
-
-    return true, ""
 end
 
 return Player

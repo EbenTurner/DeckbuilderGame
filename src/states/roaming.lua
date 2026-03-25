@@ -60,7 +60,7 @@ function Roaming:keypressed(key)
     end
 end
 
-function Roaming:onClick()
+function Roaming:mousereleased(x, y, button)
     self.map:moveTo(self.map.selected_location, self.ctx)
     self.state:switch("passive")
 end

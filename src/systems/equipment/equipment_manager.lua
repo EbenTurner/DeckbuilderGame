@@ -11,6 +11,11 @@ local EquipmentManager = {
     _instance_counter = 0
 }
 
+---@return Equipment?, integer
+-- function EquipmentManager:getSelectedEquipment()
+--     return self:getCard(self.selected_idx), self.selected_idx
+-- end
+
 function EquipmentManager:initialize(ctx)
     -- Create a standard starter set: to be replaced later
     self:equip("longsword", ctx.deck)
@@ -37,11 +42,14 @@ function EquipmentManager:equip(id, deck)
         elseif not self.equipment.hand2 then
             self.equipment.hand2 = instance
         else
-            -- Auto-replace hand1 if full, or you could throw an error/prompt UI
+            -- Auto-replace hand1 if full
+            self.equipment:unequip(self.equipment.hand1, deck)
             self.equipment.hand1 = instance
         end
     elseif instance.slot == "two_hand" then
         -- Auto replace anything currently in hands
+        self.equipment:unequip(self.equipment.hand1, deck)
+        self.equipment:unequip(self.equipment.hand2, deck)
         self.equipment.hand1 = instance
         self.equipment.hand2 = instance
     end
@@ -57,6 +65,8 @@ end
 ---@param equipment Equipment
 ---@param deck DeckManager
 function EquipmentManager:unequip(equipment, deck)
+    if not equipment then return end
+
     for _, card in ipairs(equipment.spawned_cards) do
         deck:removeCard(card)
     end
