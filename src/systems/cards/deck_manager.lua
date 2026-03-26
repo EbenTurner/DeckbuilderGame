@@ -70,6 +70,7 @@ function DeckManager:addCard(id)
     return newCard
 end
 
+-- Removes a card from anywhere in the deck
 ---@param card Card
 function DeckManager:removeCard(card)
     for i = #self.deck, 1, -1 do

@@ -57,6 +57,8 @@ end
 
 function Passive:mousereleased(x, y, button)
     if button == 1 then
+        if not self.ctx.active_card_idx then return end
+
         if self.ctx.active_card_idx > 0 then
             local card = self.deck:getCard(self.ctx.active_card_idx)
             if not card then return end
@@ -72,6 +74,7 @@ function Passive:mousereleased(x, y, button)
 
     ::cleanup::
     self:setActiveCard(0)
+    assert(self.ctx.active_card_idx == 0)
 end
 
 return Passive

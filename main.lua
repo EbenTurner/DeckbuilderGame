@@ -12,7 +12,7 @@ _G.Utils = require("src.utils")
 ---@field equipment EquipmentManager
 ---@field enemies EnemyManager
 ---@field map MapManager
----@field active_card Card
+---@field active_card Card|nil
 ---@field active_card_idx integer
 ---@field is_targeting boolean
 local context = {

@@ -42,15 +42,14 @@ function State:mousereleased(x, y, button) end
 ---@param idx integer   The index of the card in hand
 function State:setActiveCard(idx)
     local card = self.deck:getCard(idx)
-    if not card then
-        self.ctx.is_targeting = false
-        return
-    end
 
     self.ctx.active_card = card
     self.ctx.active_card_idx = idx
     --- not sets nil to true, not not sets nil to false
-    self.ctx.is_targeting = not not (card.targeted or card.is_equipment)
+    self.ctx.is_targeting = false
+    if card and (card.targeted or card.is_equipment) then
+        self.ctx.is_targeting = true
+    end
 end
 
 ---@return string|nil slot_id

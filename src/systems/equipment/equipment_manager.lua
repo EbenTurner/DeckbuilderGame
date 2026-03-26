@@ -5,16 +5,11 @@ local UI = require("src.ui.renderer")
 ---@field equipment table<string, Equipment|nil>
 ---@field _instance_counter integer
 ---@field slot_hitboxes table<string, table<string, number>>
----@field selected_slot_id string
+---@field selected_slot_id string|nil
 local EquipmentManager = {
     equipment = {},
     _instance_counter = 0
 }
-
----@return Equipment?, integer
--- function EquipmentManager:getSelectedEquipment()
---     return self:getCard(self.selected_idx), self.selected_idx
--- end
 
 function EquipmentManager:initialize(ctx)
     -- Create a standard starter set: to be replaced later
