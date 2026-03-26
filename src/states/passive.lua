@@ -35,13 +35,8 @@ function Passive:update(dt)
     end
 
     self.equipment.selected_slot_id = nil
-    if self.equipment.slot_hitboxes then
-        for id, box in pairs(self.equipment.slot_hitboxes) do
-            if Utils.checkMouseCollision(box.x, box.y, box.w, box.h) then
-                self.equipment.selected_slot_id = id
-                break
-            end
-        end
+    if self.ctx.is_targeting then
+        self.equipment.selected_slot_id = self:checkUICollisions()
     end
 end
 
@@ -64,14 +59,19 @@ function Passive:mousereleased(x, y, button)
     if button == 1 then
         if self.ctx.active_card_idx > 0 then
             local card = self.deck:getCard(self.ctx.active_card_idx)
+            if not card then return end
 
-            if card and not card.combat_only then
-                self.deck:playCard(self.ctx.active_card_idx, self.ctx)
+            if card.combat_only then return end
+            if card.is_equipment and not self.ctx.equipment.selected_slot_id then
+                goto cleanup
             end
+
+            self.deck:playCard(self.ctx.active_card_idx, self.ctx)
         end
-    elseif button == 2 then
-        self:setActiveCard(0)
     end
+
+    ::cleanup::
+    self:setActiveCard(0)
 end
 
 return Passive

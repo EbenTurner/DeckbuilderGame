@@ -6,6 +6,7 @@ local CardDB = {}
 ---@field instanceId integer?               Unique id for a specific card instance
 ---@field name string
 ---@field is_action boolean?
+---@field is_equipment boolean?
 ---@field combat_only boolean?              Clarify whether cards are combat only or not
 ---@field description string
 ---@field targeted boolean?
@@ -23,21 +24,21 @@ local CardDB = {}
 ---@return Card
 function CardDB.create(data)
     local card = {
-        id          = data.id,
-        name        = data.name,
-        is_action   = data.is_action   or false,
-        combat_only = data.combat_only or false,
-        targeted    = data.targeted    or false,
-        cost        = data.cost        or 0,
-        actionCost  = data.actionCost  or 1,
-        damage      = data.damage,
-        block       = data.block,
-        description = data.description,
-        effect      = data.effect,
+        id              = data.id,
+        name            = data.name,
+        is_action       = data.is_action,
+        is_equipment    = data.is_equipment,
+        combat_only     = data.combat_only,
+        targeted        = data.targeted,
+        cost            = data.cost         or 0,
+        actionCost      = data.actionCost   or 1,
+        damage          = data.damage,
+        block           = data.block,
+        description     = data.description,
+        effect          = data.effect,
     }
     return card
 end
-
 
 CardDB.library = {
     ice_bolt = CardDB.create({
@@ -148,6 +149,24 @@ CardDB.library = {
             target.hp = target.hp - (self.damage + ctx.player.block)
         end,
     }),
+
+    --- Equipment Cards ---
+
+    longsword = CardDB.create({
+        id = "longsword",
+        name = "Longsword",
+        slot = "hand",
+        is_equipment = true,
+        description = "A trusty sword. Improves attack action, grants 3 new offensive cards."
+    }),
+
+    shield = CardDB.create({
+        id = "shield",
+        name = "Shield",
+        slot = "hand",
+        is_equipment = true,
+        description = "A worn shield. Grants 2 new defensive cards."
+    })
 }
 
 ---@param id string

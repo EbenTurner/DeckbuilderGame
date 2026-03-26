@@ -4,7 +4,6 @@ local ActionDB = require("src.systems.cards.actions")
 ---@class DeckManager
 ---@field deck Card[]
 ---@field hand Card[]
----@field _base_hand Card[]
 ---@field discard Card[]
 ---@field actions Action[]
 ---@field _base_actions Action[]
@@ -14,7 +13,6 @@ local ActionDB = require("src.systems.cards.actions")
 local DeckManager = {
     deck = {},
     hand = {},
-    _base_hand = {},
     discard = {},
     actions = {},
     _base_actions = {},
@@ -28,13 +26,16 @@ function DeckManager:initialize()
     self:addAction("attack")
     self:addAction("move")
     self:addCard("sprint")
+    self:addCard("longsword")
+    self:addCard("shield")
+    self:addCard("longsword")
+    self:addCard("shield")
 
     self:shuffle()
 end
 
 ---@param ctx Context
 function DeckManager:update(ctx)
-    -- sync the base hand and shown hand
     self:sync(ctx)
 end
 
@@ -78,12 +79,7 @@ function DeckManager:removeCard(card)
         end
     end
 
-    for i = #self.hand, 1, -1 do
-        if self.hand[i] == card then
-            self:removeFromHand(i)
-            break
-        end
-    end
+    self:removeFromHand(card)
 
     for i = #self.discard, 1, -1 do
         if self.discard[i] == card then
@@ -126,13 +122,8 @@ function DeckManager:reshuffle()
     self:shuffle()
 end
 
--- Updates the current effective hand using base hand
+-- Updates the current effective actions using base actions
 function DeckManager:sync(ctx)
-    self.hand = {}
-    for i, base in ipairs(self._base_hand) do
-        self.hand[i] = self:getEffectiveCard(base, ctx)
-    end
-
     self.actions = {}
     for i, base in ipairs(self._base_actions) do
         local effective = self:getEffectiveCard(base, ctx)
@@ -142,25 +133,32 @@ function DeckManager:sync(ctx)
     end
 end
 
+---@param card Card
 function DeckManager:addToHand(card)
-    table.insert(self._base_hand, card)
+    table.insert(self.hand, card)
 end
 
----@param idx integer   Should be relative to the entire hand (actions included)
-function DeckManager:removeFromHand(idx)
-    if idx <= #self.actions then return end
+---@param card Card
+---@return boolean
+function DeckManager:removeFromHand(card)
+    for i = #self.hand, 1, -1 do
+        if self.hand[i] == card then
+            table.remove(self.hand, i)
+            return true
+        end
+    end
+    return false
+end
 
-    -- Get idx relative to hand array
-    idx = idx - #self.actions
-
-    local card = table.remove(self._base_hand, idx)
-    return card
+---@param card Card   
+function DeckManager:discardCard(card)
+    self:removeFromHand(card)
+    table.insert(self.discard, card)
 end
 
 function DeckManager:clearHand()
-    for i = #self._base_hand, 1, -1 do
-        local card = table.remove(self._base_hand, i)
-        table.insert(self.discard, card)
+    for i = #self.hand, 1, -1 do
+        self:discardCard(self.hand[i])
     end
 end
 
@@ -243,16 +241,25 @@ function DeckManager:playCard(idx, ctx, target)
         card:effect(ctx)
     end
 
+    if card.is_equipment then
+        local equipped = ctx.equipment:equip(card.id, self)
+        if equipped then
+            self:removeCard(card)       -- Removes card from deck until item unequipped
+        end
+        return
+    end
+
     ctx.player:playCard(card) -- Do costs here only if card is resolved
 
     if card.is_action then
         return
     end
 
-    self:removeFromHand(idx)
-    self:sync(ctx)
+    if not card.is_equipment then
+        self:discardCard(card)
+    end
 
-    table.insert(self.discard, card)
+    self:sync(ctx)
 end
 
 ---@param originalCard Card

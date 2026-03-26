@@ -1,6 +1,6 @@
 ---@class State
 ---@field name string
----@field ctx table
+---@field ctx Context
 ---@field state StateManager
 ---@field deck DeckManager
 ---@field equipment EquipmentManager
@@ -14,6 +14,8 @@ State.__index = State
 
 
 -- TODO: replace the name field, feels messy
+---@param ctx Context
+---@param name string
 function State:new(ctx, name)
     local instance = setmetatable({}, self)
 
@@ -40,10 +42,29 @@ function State:mousereleased(x, y, button) end
 ---@param idx integer   The index of the card in hand
 function State:setActiveCard(idx)
     local card = self.deck:getCard(idx)
+    if not card then
+        self.ctx.is_targeting = false
+        return
+    end
 
     self.ctx.active_card = card
     self.ctx.active_card_idx = idx
-    if card then self.ctx.is_targeting = card.targeted else self.ctx.is_targeting = false end
+    --- not sets nil to true, not not sets nil to false
+    self.ctx.is_targeting = not not (card.targeted or card.is_equipment)
+end
+
+---@return string|nil slot_id
+function State:checkUICollisions()
+    local equipment_slots = self.ctx.equipment.slot_hitboxes
+
+    if equipment_slots then
+        for id, box in pairs(equipment_slots) do
+            if Utils.checkMouseCollision(box.x, box.y, box.w, box.h) then
+                return id
+            end
+        end
+    end
+    return nil
 end
 
 return State

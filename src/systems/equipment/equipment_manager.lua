@@ -18,12 +18,12 @@ local EquipmentManager = {
 
 function EquipmentManager:initialize(ctx)
     -- Create a standard starter set: to be replaced later
-    self:equip("longsword", ctx.deck)
-    self:equip("shield", ctx.deck)
+    -- self:equip("longsword", ctx.deck)
 end
 
 ---@param id string
 ---@param deck DeckManager
+---@return boolean
 function EquipmentManager:equip(id, deck)
     local template = EquipmentDB:get(id)
     assert(template, "No equipment associated with template for id: " .. id)
@@ -33,43 +33,41 @@ function EquipmentManager:equip(id, deck)
     local instance = {
         instanceId = self._instance_counter,
         spawned_cards = {},
+        slot = template.slot
     }
     setmetatable(instance, { __index = template })
 
-    if instance.slot == "hand" then
-        if not self.equipment.hand1 then
-            self.equipment.hand1 = instance
-        elseif not self.equipment.hand2 then
-            self.equipment.hand2 = instance
-        else
-            -- Auto-replace hand1 if full
-            self.equipment:unequip(self.equipment.hand1, deck)
-            self.equipment.hand1 = instance
-        end
-    elseif instance.slot == "two_hand" then
-        -- Auto replace anything currently in hands
-        self.equipment:unequip(self.equipment.hand1, deck)
-        self.equipment:unequip(self.equipment.hand2, deck)
-        self.equipment.hand1 = instance
-        self.equipment.hand2 = instance
+    local slot_id = self.selected_slot_id
+    if instance.slot == "hand" and (slot_id == "hand1" or slot_id == "hand2") then
+        self:unequip(slot_id, deck)
+        self.equipment[slot_id] = instance
+    else
+        return false
     end
 
     if template.granted_cards then
         for _, cardId in ipairs(template.granted_cards) do
             local cardInstance = deck:addCard(cardId)
-            table.insert(instance.spawned_cards, cardInstance) -- Store the instance of the card for unequipping
+            table.insert(instance.spawned_cards, cardInstance)
         end
     end
+
+    return true
 end
 
----@param equipment Equipment
+---@param slot string
 ---@param deck DeckManager
-function EquipmentManager:unequip(equipment, deck)
+function EquipmentManager:unequip(slot, deck)
+    local equipment = self.equipment[slot]
     if not equipment then return end
 
+    -- Remove all added cards from the deck
     for _, card in ipairs(equipment.spawned_cards) do
         deck:removeCard(card)
     end
+
+    -- Place asset back into deck
+    deck:addCard(equipment.id)
 end
 
 ---@param ctx Context

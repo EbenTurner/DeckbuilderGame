@@ -304,6 +304,7 @@ function Renderer.drawLayout()
     love.graphics.rectangle("line", layout.handZone.x, layout.handZone.y, layout.handZone.w, layout.handZone.h)
 end
 
+-- Draws the targeting line for playing cards
 ---@param ctx Context
 function Renderer.drawTargetingUI(ctx)
     if ctx.is_targeting and ctx.active_card then
