@@ -39,7 +39,7 @@ function State:keypressed(key) end
 function State:mousepressed(x, y, button) end
 function State:mousereleased(x, y, button) end
 
----@param idx integer   The index of the card in hand
+---@param idx integer   The index of the card in hand | 0 for no active card
 function State:setActiveCard(idx)
     local card = self.deck:getCard(idx)
 
