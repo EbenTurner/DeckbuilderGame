@@ -73,13 +73,18 @@ local function drawFeedback()
     love.graphics.setColor(1, 1, 1, 1)
 end
 
--- For now, just draw 5 cards. Reset actions and mana.
+local function firstTurn()
+    DeckManager:firstTurn()
+    Player:startTurn()
+end
+
+-- For now, just draw 1 card. Reset actions and mana.
 local function startTurn()
     DeckManager:startTurn()
     Player:startTurn()
 end
 
--- For now, just move all cards from hand to discard
+-- For now, just ready all enemies
 local function endTurn()
     DeckManager:endTurn()
     EnemyManager:enemyPhase(context)
@@ -98,7 +103,7 @@ function love.load()
     EnemyManager:initialize()
     MapManager:initialize(context)
 
-    startTurn()
+    firstTurn()
 end
 
 function love.update(dt)

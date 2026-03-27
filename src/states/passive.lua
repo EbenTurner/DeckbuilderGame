@@ -51,7 +51,8 @@ end
 
 function Passive:mousepressed(x, y, button)
     if button == 1 then
-        local _, idx = self.deck:getSelectedCard()
+        local card, idx = self.deck:getSelectedCard()
+        if card and card.combat_only then return end
         self:setActiveCard(idx)
     end
 end

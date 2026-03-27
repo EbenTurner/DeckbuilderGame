@@ -173,18 +173,18 @@ function DeckManager:drawCard(deck)
 end
 
 
-function DeckManager:startTurn()
+function DeckManager:firstTurn()
     for _ = 1, 5 do
         self:drawCard()
     end
-
-    self.selected_idx = 1
 end
 
-
-function DeckManager:endTurn()
-    self:clearHand()
+function DeckManager:startTurn()
+    self:drawCard()
 end
+
+-- Ending turn currently does nothing, may have end of turn effects
+function DeckManager:endTurn() end
 
 ---@param idx integer
 ---@return Card?

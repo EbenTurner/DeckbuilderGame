@@ -60,6 +60,11 @@ function Combat:update(dt)
             end
         end
     end
+
+    self.equipment.selected_slot_id = nil
+    if self.ctx.is_targeting then
+        self.equipment.selected_slot_id = self:checkUICollisions()
+    end
 end
 
 function Combat:exit()
@@ -99,17 +104,24 @@ function Combat:mousereleased(x, y, button)
 
     if button == 1 then
         if self.ctx.active_card_idx > 0 then
+            local card = self.deck:getCard(self.ctx.active_card_idx)
+            if not card then return end
+
             if self.ctx.is_targeting and self.target_idx and self.target_idx > 0 then
                 target = self.enemies.engaged_enemies[self.target_idx]
             end
 
+            if card.is_equipment and not self.ctx.equipment.selected_slot_id then
+                goto cleanup
+            end
+
             self.deck:playCard(self.ctx.active_card_idx, self.ctx, target)
         end
-
-        self:setActiveCard(0)
-    elseif button == 2 then
-        self:setActiveCard(0)   -- cancel action
     end
+
+    ::cleanup::
+    self:setActiveCard(0)
+    assert(self.ctx.active_card_idx == 0)
 end
 
 return Combat
