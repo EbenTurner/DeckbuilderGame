@@ -91,12 +91,12 @@ function love.load()
 
     require("src.systems.player.player")
 
+    StateManager:initialize(context)
+
     DeckManager:initialize()
     EquipmentManager:initialize(context)
     EnemyManager:initialize()
     MapManager:initialize(context)
-
-    StateManager:initialize(context)
 
     startTurn()
 end

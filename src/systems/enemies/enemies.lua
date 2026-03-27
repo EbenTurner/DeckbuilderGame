@@ -10,6 +10,7 @@ local EnemyDB = {}
 ---@field elite boolean?
 ---@field hunter boolean?
 ---@field location string?
+---@field exhausted boolean?
 ---@field alive boolean?
 ---@field x number?
 ---@field y number?
@@ -17,11 +18,18 @@ local EnemyDB = {}
 ---@field h number?
 ---@field attack function?
 ---@field moveTowardsPlayer function?
+---@field exhaust function?
+---@field ready function?
 
 -- EnemyFunctons is a way to link defined functions to every enemy object
 local EnemyFunctions = {}
 
 function EnemyFunctions:attack(ctx)
+    --- Enemies do not attack when exhausted
+    if self.exhausted then
+        return
+    end
+
     if ctx.player.block >= self.damage then
         ctx.player.block = ctx.player.block - self.damage
     else
@@ -29,6 +37,8 @@ function EnemyFunctions:attack(ctx)
         ctx.player.block = 0
         ctx.player.hp = ctx.player.hp - hp_loss
     end
+
+    self:exhaust()
 end
 
 function EnemyFunctions:moveTowardsPlayer(ctx)
@@ -36,6 +46,14 @@ function EnemyFunctions:moveTowardsPlayer(ctx)
 
     -- TODO: May want to have a speed stat for multiple locations per turn / no movement
     self.location = shortestPath[2]
+end
+
+function EnemyFunctions:exhaust()
+    self.exhausted = true
+end
+
+function EnemyFunctions:ready()
+    self.exhausted = false
 end
 
 ---@param data Enemy

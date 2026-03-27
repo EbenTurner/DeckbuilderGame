@@ -16,6 +16,7 @@ end
 
 ---@param id string
 ---@param location Location
+---@return Enemy
 function EnemyManager:spawn(id, location)
     -- create an instance of an enemy in a location
     local template = EnemyDB:get(id)
@@ -33,6 +34,7 @@ function EnemyManager:spawn(id, location)
     setmetatable(instance, { __index = template })
 
     table.insert(self.unengaged_enemies, instance)
+    return instance
 end
 
 ---@param instanceId integer
@@ -75,12 +77,20 @@ end
 function EnemyManager:enemyPhase(ctx)
     -- Enemies move if they are unengaged
     for _, enemy in ipairs(self.unengaged_enemies) do
-        enemy:moveTowardsPlayer(ctx)
+        if enemy.exhausted then
+            enemy:ready()
+        else
+            enemy:moveTowardsPlayer(ctx)
+        end
     end
 
     -- For now just attack player if they are engaged
     for _, enemy in ipairs(self.engaged_enemies) do
-        enemy:attack(ctx)
+        if enemy.exhausted then
+            enemy:ready()
+        else
+            enemy:attack(ctx)
+        end
     end
 end
 

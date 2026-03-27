@@ -14,14 +14,16 @@ MapManager._instance_counter = 0
 
 function MapManager:initialize(ctx)
     -- Add one room and start there
-    local startRoom = self:addLocation("room", 0, 0)
-    local tavern = self:addLocation("tavern", 1, 0)
-    local horRoom = self:addLocation("room", 2, 0)
-    local boss = self:addLocation("boss", 1, 1)
-    local exit = self:addLocation("exit", 2, 1)
+    local startRoom = self:addLocation("room", 0, 1)
+    local tavern = self:addLocation("tavern", 1, 1)
+    local zombieRoom = self:addLocation("zombie_corpse", 1, 0)
+    local horRoom = self:addLocation("room", 2, 1)
+    local boss = self:addLocation("boss", 1, 2)
+    local exit = self:addLocation("exit", 2, 2)
 
     self:addConnection(startRoom, tavern)
     self:addConnection(tavern, boss)
+    self:addConnection(tavern, zombieRoom)
     self:addConnection(horRoom, tavern)
     self:addConnection(boss, exit)
 
@@ -65,14 +67,31 @@ function MapManager:setCurrentLocation(location)
 end
 
 ---@param location Location
+---@param ctx Context
+function MapManager:revealLocation(location, ctx)
+    location:reveal(ctx)
+    location.revealed = true
+
+    if location.type == "event" then
+        ctx.state:switch("event", { id = location.id })
+    end
+end
+
+
+---@param location Location
+---@param ctx Context
 function MapManager:enterLocation(location, ctx)
     self:setCurrentLocation(location)
-    if not location.revealed then
-        location:reveal(ctx)
-        location.revealed = true
+    location:enter(ctx)
+
+    -- Don't switch to passive for event rooms (switch to event)
+    if location.type ~= "event" or location.revealed then
+        ctx.state:switch("passive")
     end
 
-    location:enter(ctx)
+    if not location.revealed then
+        self:revealLocation(location, ctx)
+    end
 end
 
 ---@param destination Location

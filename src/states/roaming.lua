@@ -45,7 +45,6 @@ end
 
 function Roaming:mousereleased(x, y, button)
     self.map:moveTo(self.map.selected_location, self.ctx)
-    self.state:switch("passive")
     self:setActiveCard(0)
 end
 

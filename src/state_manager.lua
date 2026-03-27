@@ -1,12 +1,14 @@
 local RoamingState = require("src.states.roaming")
 local CombatState = require("src.states.combat")
 local PassiveState = require("src.states.passive")
+local EventState = require("src.states.event_state")
 local UI = require("src.ui.renderer")
 
 ---@class States
 ---@field combat State | nil
 ---@field roaming State | nil
 ---@field passive State | nil
+---@field event State | nil
 
 ---@class StateManager
 ---@field states States
@@ -17,7 +19,8 @@ local StateManager = {}
 StateManager.states = {
     roaming = nil,
     combat = nil,
-    passive = nil
+    passive = nil,
+    event = nil,
 }
 
 function StateManager:initialize(ctx)
@@ -28,6 +31,7 @@ function StateManager:initialize(ctx)
     self.states.roaming = RoamingState:new(ctx)
     self.states.combat  = CombatState:new(ctx)
     self.states.passive = PassiveState:new(ctx)
+    self.states.event = EventState:new(ctx)
 
     -- inject global information into the instances
     for _, state in pairs(self.states) do
@@ -42,7 +46,7 @@ function StateManager:switch(stateName, data)
     if self.current then self.current:exit() end
 
     self.current = self.states[stateName]
-    assert(self.current, "State '" .. stateName .. "' dies not exist!")
+    assert(self.current, "State '" .. stateName .. "' does not exist!")
 
     self.current:enter(data)
 end
