@@ -42,6 +42,7 @@ end
 
 function Passive:exit()
     -- Clean up passive
+    self.deck.selected_idx = 0
 end
 
 function Passive:draw(ctx)

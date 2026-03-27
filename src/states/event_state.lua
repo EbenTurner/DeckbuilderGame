@@ -87,12 +87,6 @@ function EventState:draw(ctx)
         love.graphics.setColor(1, 1, 1)
         love.graphics.printf(option.text, bx, by + 10, self.btn.w, "center")
     end
-
-    love.graphics.setColor(1, 0, 0, 0.5) -- Semi-transparent red
-    for i = 1, #self.data.options do
-        local by = self.btn.startY + (i - 1) * (self.btn.h + self.btn.spacing)
-        love.graphics.rectangle("line", bx, by, self.btn.w, self.btn.h)
-    end
 end
 
 return EventState

@@ -42,6 +42,8 @@ function EnemyFunctions:attack(ctx)
 end
 
 function EnemyFunctions:moveTowardsPlayer(ctx)
+    if not self.hunter then return end
+
     local shortestPath = ctx.map:shortestPath(self.location, ctx.map.current)
 
     -- TODO: May want to have a speed stat for multiple locations per turn / no movement

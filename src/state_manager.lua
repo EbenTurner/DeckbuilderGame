@@ -71,13 +71,13 @@ function StateManager:draw()
     UI.print("Actions: " .. player.actions .. "/" .. player.max_actions)
     UI.print("Mana: " .. player.mana .. "/" .. player.max_mana)
 
-    -- 2. Draw current environment (e.g. Combat enemies)
-    self.current:draw(self.ctx)
-
-    -- 3. Draw Hand from the injected context
+    -- 2. Draw Hand from the injected context
     UI.drawHand(deck, self.ctx)
     UI.drawTargetingUI(self.ctx)
     equipment:draw(self.ctx)
+
+    -- 3. Draw current environment (e.g. Event popup above everything)
+    self.current:draw(self.ctx)
 end
 
 function StateManager:keypressed(key)
